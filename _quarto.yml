@@ -18,6 +18,7 @@ format:
     theme:
       - cosmo
       - brand
+    site-url: "https://quentinlaval.github.io/Cours_Tests_statistiques/"
   pdf:
     documentclass: scrreprt
 
