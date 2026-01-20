@@ -1,0 +1,487 @@
+# Théorie générale des tests statistiques
+
+Le test d'hypothèse est un concept fondamental dans le monde scientifique. Un test d'hypothèse a pour but de présenter une règle de décision, établie à l'aide de résultats d'échantillon, permettant de d'effectuer un choix entre deux hypothèses statistiques.
+
+## Concepts fondamentaux
+
+Qu'est-ce qu'une hypothèse statistique ?
+C'est une affirmation a priori sur une ou plusieurs caractéristiques d'une population telles que la valeur de paramètres, la distribution des observations.
+
+Il existe deux types d'hypothèses :
+
+-   **Hypothèse nulle (H₀)** : hypothèse soumise au test statistique et considérée comme vraie pour le test, H₀ est souvent un modèle simple ou bien une valeur définie d'un paramètre. Exemple, il n'y a pas de différence entre les moyennes de mes deux groupes, H₀ : µ₁ = µ2 
+  
+-   **Hypothèse alternative (H₁)** : hypothèse différente de H₀, communément son opposé. Exemple H₁ : µ₁ ≠ µ2
+
+Les erreurs de Type I et de Type II, qu'est-ce ?
+
+-   **α l'erreur de Type I (ou risque de première espèce)** : c'est la probabilité de rejeter H₀ alors que H₀ est vraie. Dit autrement, c'est le risque de conclure à tort, via les résultats obtenus, sur une différence réelle alors qu'elle est due au hasard. Exemple : un joueur joue à la roulette, il lance la roue 6 fois, il voit sortir 4 numéros rouges et 2 numéros noirs. Il en conclu qu'il y a deux fois plus de numéros rouges que de noirs.
+
+::: {.column-margin}
+```{r echo=FALSE}
+#| fig-width: 1.5
+#| fig-height: 1.5
+#| fig-cap: "Exemple : Jeu de la Roulette"
+knitr::include_graphics("Images/roulette.png")
+```
+:::
+
+-   **β l'erreur de Type II (ou risque de deuxième espèce)** : c'est la probabilité de **ne pas** rejeter H₀ alors que H₀ est fausse. En autres, c'est le risque de conclure à tort qu'il n'y a pas de différence alors qu'il y a une différence réelle.
+
+
+La puissance d'un test statistique, c'est la probabilité de rejeter H₀ lorsque H₀ est fausse. Elle se calcul ainsi : puissance = 1 - β
+
+![](Images/ErrorTypes.png)
+```{r setup, echo=FALSE, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+set.seed(42)
+```
+
+## Test de Student (ou t test)
+
+Le test de Student permet une comparaison simple mais importante, celle des moyennes entre deux groupes. La statistique de test est définie ainsi
+
+$$
+t = c \, \frac{\bar{m}_1 - \bar{m}_2}{s}
+$$
+
+Où $\bar{m}_1$ et $\bar{m}_2$ sont les moyennes respectives des deux groupes,
+$c$ est une constante dépendante de la taille d'échantillon, $s^{2}$ est l'estimateur sans biais de la variance globale.
+$$
+\bar{m}_1 = \frac{1}{n_1} \sum_{i=1}^{n_1} x_{1,i}
+\qquad
+\bar{m}_2 = \frac{1}{n_2} \sum_{i=1}^{n_2} x_{2,i}
+$$
+
+$s_1^2$ et $s_2^2$ sont les estimateurs sans biais de la variance intra-groupe.
+
+$$
+s_1^2 = \frac{1}{n_1 - 1} \sum_{i=1}^{n_1} (x_{1,i} - \bar{m}_1)^2
+\qquad
+s_2^2 = \frac{1}{n_2 - 1} \sum_{i=1}^{n_2} (x_{2,i} - \bar{m}_2)^2
+$$
+
+
+$$
+s =
+\sqrt{
+\frac{(n_1 - 1)s_1^2 + (n_2 - 1)s_2^2}
+     {n_1 + n_2 - 2}
+}
+$$
+
+$$
+c = \sqrt{\frac{n_1 n_2}{n_1 + n_2}}
+$$
+
+
+
+::: {.column-margin}
+```{r,echo=FALSE,message=FALSE, warning=FALSE}
+# ggplot(data.frame(x = echantillon), aes(x = x)) +
+#   geom_histogram(bins = 10, fill = "steelblue", alpha = 0.7) +
+#   geom_vline(xintercept = 100, color = "red", linetype = "dashed", size = 1) +
+#   geom_vline(xintercept = mean(echantillon), color = "green", size = 1) +
+#   labs(
+#     title = "Test t à un échantillon",
+#     subtitle = paste("p-value =", round(resultat$p.value, 4)),
+#     x = "Valeurs", y = "Fréquence"
+#   ) +
+#   theme_minimal()
+```
+:::
+
+### Test de Student à deux échantillons indépendants
+
+Compare les moyennes de deux groupes indépendants : trt2 (n=10) et crtl (n=10).
+
+```{r, echo=FALSE}
+data("PlantGrowth")
+exemple_data <- PlantGrowth %>% filter(group != "trt1")
+```
+
+::: {.column-margin}
+```{r test-t-two-samples, echo=FALSE, warning=FALSE, message=FALSE}
+#| fig-width: 3
+#| fig-height: 3
+#| fig-cap: "Exemple de données de deux groupes"
+ggplot(exemple_data, aes(y = weight, x = group, col = group)) +
+  geom_point() + 
+  theme(legend.position = "none")
+
+```
+:::
+
+```{r}
+tt <- with(exemple_data,
+          t.test(weight[group =="ctrl"],
+                 weight[group =="trt2"],
+                 var.equal = TRUE))
+tt
+```
+
+On observe une différence entre mes deux groupes de faible échantillon, que ce passerait-il si on augmente artificiellement la taille d'échantillon en dupliquant les données ? Je conserve le même groupe
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+library(purrr)
+library(gganimate)
+compute_pvalue <- function(data, k) {
+
+  data_k <- data %>%
+    slice(rep(row_number(), times = k))
+
+  tt <- with(
+    data_k,
+    t.test(
+      weight[group == "ctrl"],
+      weight[group == "trt2"],
+      var.equal = TRUE
+    )
+  )
+
+  tibble(
+    duplication = k,
+    n_per_group = 10 * k,
+    p_value = tt$p.value
+  )
+}
+
+results <- map_dfr(
+  c(1, 2, 5, 10, 20, 30, 40, 50, 70, 100),
+  ~ compute_pvalue(exemple_data, .x)
+)
+
+p <- ggplot(
+  results,
+  aes(x = n_per_group, y = p_value)
+) +
+  geom_point(color = "steelblue", size = 2) +
+  geom_line(color = "steelblue") +
+  geom_hline(aes(yintercept = 0.05, linetype = "pvalue = 0.05", color = "pvalue = 0.05")) +
+    scale_color_manual(
+    name = NULL,
+    values = c("pvalue = 0.05" = "red")
+  ) +
+  scale_linetype_manual(
+    name = NULL,
+    values = c("pvalue = 0.05" = "dashed")
+  ) +
+  scale_y_log10() +
+  labs(
+    x = "Taille d'échantillon par groupe",
+    y = "p-value",
+    title = "Impact de la taille d'échantillon sur la p-value"
+  ) +
+  theme_minimal()
+
+animated_plot <- p +
+transition_reveal(along = n_per_group)+
+  ease_aes("linear")
+
+animated_plot
+
+```
+```{r}
+data_k <- exemple_data %>%
+  slice(rep(row_number(), times = 10))
+
+tt_10 <- with(
+  data_k,
+  t.test(
+    weight[group == "ctrl"],
+    weight[group == "trt2"],
+    var.equal = TRUE
+  )
+)
+tt_10
+```
+Dans cet exemple j'ai dupliqué dix fois le jeu de données, on peut voir que les moyennes sont **identiques** mais que la pvalue associée est bien **plus basse** :
+
+-   La puissance statistique associée au test de Student est dépendante de la taille d'échantillon. Plus le nombre d'observations est élevé, plus les résultats seront significatifs.
+
+
+## Test de proportion
+
+Teste si une proportion observée diffère d'une proportion théorique.
+
+```{r test-proportion}
+# Exemple: 55 succès sur 100 essais
+# H₀: p = 0.5 vs H₁: p ≠ 0.5
+resultat_prop <- prop.test(x = 55, n = 100, p = 0.5)
+print(resultat_prop)
+
+# Test de comparaison de deux proportions
+# Groupe 1: 45/100, Groupe 2: 60/100
+resultat_prop2 <- prop.test(x = c(45, 60), n = c(100, 100))
+print(resultat_prop2)
+
+# Visualisation
+prop_data <- data.frame(
+  groupe = c("Groupe 1", "Groupe 2"),
+  proportion = c(45/100, 60/100),
+  n = c(100, 100)
+)
+
+ggplot(prop_data, aes(x = groupe, y = proportion, fill = groupe)) +
+  geom_bar(stat = "identity", alpha = 0.7) +
+  geom_hline(yintercept = 0.5, linetype = "dashed", color = "red") +
+  geom_errorbar(aes(ymin = proportion - 1.96*sqrt(proportion*(1-proportion)/n),
+                    ymax = proportion + 1.96*sqrt(proportion*(1-proportion)/n)),
+                width = 0.2) +
+  labs(title = "Comparaison de proportions",
+       subtitle = paste("p-value =", round(resultat_prop2$p.value, 4)),
+       y = "Proportion") +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+## Test de Wilcoxon
+
+Test non-paramétrique alternatif au test t (ne suppose pas la normalité).
+
+### Test de Mann-Whitney (Wilcoxon pour deux échantillons indépendants)
+
+```{r mann-whitney}
+groupe_X <- rexp(30, rate = 0.1)
+groupe_Y <- rexp(30, rate = 0.08)
+
+resultat_mw <- wilcox.test(groupe_X, groupe_Y)
+print(resultat_mw)
+
+# Visualisation
+donnees_mw <- data.frame(
+  valeur = c(groupe_X, groupe_Y),
+  groupe = rep(c("Groupe X", "Groupe Y"), each = 30)
+)
+
+ggplot(donnees_mw, aes(x = groupe, y = valeur, fill = groupe)) +
+  geom_violin(alpha = 0.7) +
+  geom_boxplot(width = 0.2, fill = "white") +
+  labs(title = "Test de Mann-Whitney",
+       subtitle = paste("p-value =", round(resultat_mw$p.value, 4)),
+       y = "Valeurs") +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+# Multiplicité des tests
+
+Lorsqu'on effectue plusieurs tests simultanément, le risque d'erreur de type I (faux positif) augmente.
+
+```{r multiple-testing-problem}
+# Simulation du problème
+n_tests <- 20
+p_values <- replicate(1000, {
+  sapply(1:n_tests, function(i) {
+    x <- rnorm(30)
+    y <- rnorm(30)
+    t.test(x, y)$p.value
+  })
+})
+
+# Proportion de fois où au moins un test est significatif (α = 0.05)
+prop_au_moins_un <- mean(apply(p_values < 0.05, 2, any))
+
+cat("Avec", n_tests, "tests et α = 0.05:\n")
+cat("Probabilité d'au moins un faux positif:", round(prop_au_moins_un, 3), "\n")
+cat("Valeur théorique: 1 - (1-0.05)^20 =", round(1 - (1-0.05)^n_tests, 3), "\n")
+```
+
+## Family-Wise Error Rate (FWER)
+
+Probabilité de faire au moins une erreur de type I parmi tous les tests.
+
+**FWER = P(au moins un faux positif)**
+
+## False Discovery Rate (FDR)
+
+Proportion attendue de faux positifs parmi les découvertes significatives.
+
+**FDR = E(V/R)** où V = nombre de faux positifs, R = nombre de rejets
+
+## Corrections pour tests multiples
+
+```{r corrections-setup}
+# Générer des p-values de test
+set.seed(123)
+n_tests <- 100
+# 90 vrais H₀ (non significatifs) et 10 vrais H₁ (significatifs)
+p_vals <- c(
+  runif(90, 0.05, 1),  # vrais négatifs
+  runif(10, 0, 0.01)   # vrais positifs
+)
+p_vals <- sample(p_vals)  # mélanger
+```
+
+### Correction de Bonferroni
+
+Contrôle strictement le FWER en divisant α par le nombre de tests.
+
+**α_corrigé = α / m** où m = nombre de tests
+
+```{r bonferroni}
+alpha <- 0.05
+bonf_threshold <- alpha / n_tests
+
+cat("Seuil de Bonferroni:", bonf_threshold, "\n")
+cat("Tests significatifs (non corrigé):", sum(p_vals < alpha), "\n")
+cat("Tests significatifs (Bonferroni):", sum(p_vals < bonf_threshold), "\n")
+
+# Avec p.adjust
+p_bonf <- p.adjust(p_vals, method = "bonferroni")
+cat("Tests significatifs (p.adjust):", sum(p_bonf < alpha), "\n")
+```
+
+### Correction de Holm (Bonferroni séquentielle)
+
+Version moins conservative de Bonferroni.
+
+```{r holm}
+p_holm <- p.adjust(p_vals, method = "holm")
+
+cat("Tests significatifs (Holm):", sum(p_holm < alpha), "\n")
+```
+
+### False Discovery Rate (Benjamini-Hochberg)
+
+Contrôle le FDR au lieu du FWER, plus puissant pour les tests multiples.
+
+```{r fdr}
+p_fdr <- p.adjust(p_vals, method = "BH")
+
+cat("Tests significatifs (FDR/BH):", sum(p_fdr < alpha), "\n")
+```
+
+### Comparaison des méthodes
+
+```{r comparison-methods}
+# Créer un tableau comparatif
+comparaison <- data.frame(
+  p_value = p_vals,
+  rang = rank(p_vals),
+  non_corrige = p_vals < alpha,
+  bonferroni = p_bonf < alpha,
+  holm = p_holm < alpha,
+  BH_FDR = p_fdr < alpha
+)
+
+# Résumé
+resume <- data.frame(
+  Methode = c("Non corrigé", "Bonferroni", "Holm", "BH (FDR)"),
+  Significatifs = c(
+    sum(comparaison$non_corrige),
+    sum(comparaison$bonferroni),
+    sum(comparaison$holm),
+    sum(comparaison$BH_FDR)
+  )
+)
+
+print(resume)
+
+# Visualisation
+comparaison_long <- comparaison %>%
+  select(rang, non_corrige, bonferroni, holm, BH_FDR) %>%
+  pivot_longer(-rang, names_to = "methode", values_to = "significatif") %>%
+  mutate(methode = factor(methode, 
+                          levels = c("non_corrige", "bonferroni", "holm", "BH_FDR"),
+                          labels = c("Non corrigé", "Bonferroni", "Holm", "BH (FDR)")))
+
+ggplot(comparaison_long, aes(x = rang, y = methode, fill = significatif)) +
+  geom_tile() +
+  scale_fill_manual(values = c("white", "darkgreen"), 
+                    labels = c("Non significatif", "Significatif")) +
+  labs(title = "Comparaison des méthodes de correction",
+       x = "Rang de la p-value (1 = plus petite)",
+       y = "Méthode",
+       fill = "") +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+```
+
+### Visualisation des seuils de décision
+
+```{r visualization-thresholds}
+# Créer un dataframe pour la visualisation
+df_viz <- data.frame(
+  rang = 1:n_tests,
+  p_value = sort(p_vals)
+) %>%
+  mutate(
+    seuil_standard = alpha,
+    seuil_bonferroni = alpha / n_tests,
+    seuil_BH = (rang / n_tests) * alpha
+  )
+
+ggplot(df_viz, aes(x = rang)) +
+  geom_point(aes(y = p_value), alpha = 0.6) +
+  geom_line(aes(y = seuil_standard, color = "Standard (α = 0.05)"), 
+            size = 1, linetype = "dashed") +
+  geom_line(aes(y = seuil_bonferroni, color = "Bonferroni"), 
+            size = 1) +
+  geom_line(aes(y = seuil_BH, color = "Benjamini-Hochberg"), 
+            size = 1) +
+  scale_color_manual(values = c("red", "blue", "green")) +
+  labs(title = "Seuils de décision selon les méthodes",
+       x = "Rang de la p-value",
+       y = "P-value",
+       color = "Méthode") +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+```
+
+## Recommandations pratiques
+
+### Choix de la méthode
+
+| Situation                         | Méthode recommandée      |
+|-----------------------------------|--------------------------|
+| Nombre limité de tests (\< 10)    | Bonferroni               |
+| Besoin de contrôle strict du FWER | Bonferroni ou Holm       |
+| Grand nombre de tests             | FDR (Benjamini-Hochberg) |
+| Exploration de données            | FDR (Benjamini-Hochberg) |
+| Confirmation d'hypothèses         | Bonferroni               |
+
+### Code récapitulatif
+
+```{r recap-code}
+# Fonction pour comparer toutes les méthodes
+comparer_corrections <- function(p_values, alpha = 0.05) {
+  data.frame(
+    Methode = c("Non corrigé", "Bonferroni", "Holm", "Hochberg", 
+                "Hommel", "BH (FDR)", "BY (FDR)"),
+    Significatifs = c(
+      sum(p_values < alpha),
+      sum(p.adjust(p_values, "bonferroni") < alpha),
+      sum(p.adjust(p_values, "holm") < alpha),
+      sum(p.adjust(p_values, "hochberg") < alpha),
+      sum(p.adjust(p_values, "hommel") < alpha),
+      sum(p.adjust(p_values, "BH") < alpha),
+      sum(p.adjust(p_values, "BY") < alpha)
+    )
+  )
+}
+
+# Exemple d'utilisation
+comparer_corrections(p_vals)
+```
+
+# Relation entre puissance, taille d'échantillon, taille d'effet et alpha
+
+```{r}
+
+```
+
+
+# Conclusion
+
+-   Les tests d'hypothèses permettent de prendre des décisions statistiques
+-   Le test t est paramétrique et suppose la normalité
+-   Le test de Wilcoxon est une alternative non-paramétrique robuste
+-   Les tests de proportion sont utilisés pour les données binaires
+-   La correction pour tests multiples est **essentielle** pour éviter les faux positifs
+-   **FWER** contrôle la probabilité de toute erreur (strict)
+-   **FDR** contrôle la proportion d'erreurs (plus puissant)
+-   Bonferroni: simple mais conservateur
+-   Benjamini-Hochberg (FDR): équilibre entre puissance et contrôle

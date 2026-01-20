@@ -1,0 +1,262 @@
+[
+  {
+    "objectID": "intro.html",
+    "href": "intro.html",
+    "title": "1  Théorie générale des tests statistiques",
+    "section": "",
+    "text": "1.1 Concepts fondamentaux\nLe test d’hypothèse est un concept fondamental dans le monde scientifique. Un test d’hypothèse a pour but de présenter une règle de décision, établie à l’aide de résultats d’échantillon, permettant de d’effectuer un choix entre deux hypothèses statistiques.\nQu’est-ce qu’une hypothèse statistique ? C’est une affirmation a priori sur une ou plusieurs caractéristiques d’une population telles que la valeur de paramètres, la distribution des observations.\nIl existe deux types d’hypothèses :\nLes erreurs de Type I et de Type II, qu’est-ce ?\nLa puissance d’un test statistique, c’est la probabilité de rejeter H₀ lorsque H₀ est fausse. Elle se calcul ainsi : puissance = 1 - β",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Théorie générale des tests statistiques</span>"
+    ]
+  },
+  {
+    "objectID": "intro.html#concepts-fondamentaux",
+    "href": "intro.html#concepts-fondamentaux",
+    "title": "1  Théorie générale des tests statistiques",
+    "section": "",
+    "text": "Hypothèse nulle (H₀) : hypothèse soumise au test statistique et considérée comme vraie pour le test, H₀ est souvent un modèle simple ou bien une valeur définie d’un paramètre. Exemple, il n’y a pas de différence entre les moyennes de mes deux groupes, H₀ : µ₁ = µ2\nHypothèse alternative (H₁) : hypothèse différente de H₀, communément son opposé. Exemple H₁ : µ₁ ≠ µ2\n\n\n\nα l’erreur de Type I (ou risque de première espèce) : c’est la probabilité de rejeter H₀ alors que H₀ est vraie. Dit autrement, c’est le risque de conclure à tort, via les résultats obtenus, sur une différence réelle alors qu’elle est due au hasard. Exemple : un joueur joue à la roulette, il lance la roue 6 fois, il voit sortir 4 numéros rouges et 2 numéros noirs. Il en conclu qu’il y a deux fois plus de numéros rouges que de noirs.\n\n\n\n\n\n\n\n\nExemple : Jeu de la Roulette\n\n\n\n\n\nβ l’erreur de Type II (ou risque de deuxième espèce) : c’est la probabilité de ne pas rejeter H₀ alors que H₀ est fausse. En autres, c’est le risque de conclure à tort qu’il n’y a pas de différence alors qu’il y a une différence réelle.",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Théorie générale des tests statistiques</span>"
+    ]
+  },
+  {
+    "objectID": "intro.html#test-t-à-un-échantillon",
+    "href": "intro.html#test-t-à-un-échantillon",
+    "title": "1  Introduction aux tests d’hypothèses",
+    "section": "2.1 Test t à un échantillon",
+    "text": "2.1 Test t à un échantillon\nTeste si la moyenne d’un échantillon est différente d’une valeur théorique.\n\n# Générer des données\nechantillon &lt;- rnorm(30, mean = 100, sd = 15)\n\n# H₀: μ = 100 vs H₁: μ ≠ 100\nresultat &lt;- t.test(echantillon, mu = 100)\nprint(resultat)\n\n\n    One Sample t-test\n\ndata:  echantillon\nt = 0.29933, df = 29, p-value = 0.7668\nalternative hypothesis: true mean is not equal to 100\n95 percent confidence interval:\n  93.99927 108.05833\nsample estimates:\nmean of x \n 101.0288 \n\n\n\n\n\n\nWarning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.\nℹ Please use `linewidth` instead.",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Introduction aux tests d'hypothèses</span>"
+    ]
+  },
+  {
+    "objectID": "intro.html#test-t-à-deux-échantillons-indépendants",
+    "href": "intro.html#test-t-à-deux-échantillons-indépendants",
+    "title": "1  Introduction aux tests d’hypothèses",
+    "section": "2.2 Test t à deux échantillons indépendants",
+    "text": "2.2 Test t à deux échantillons indépendants\nCompare les moyennes de deux groupes indépendants.\n\n# Générer deux groupes\ngroupe_A &lt;- rnorm(30, mean = 100, sd = 15)\ngroupe_B &lt;- rnorm(30, mean = 110, sd = 15)\n\n# H₀: μ_A = μ_B vs H₁: μ_A ≠ μ_B\nresultat_2 &lt;- t.test(groupe_A, groupe_B)\nprint(resultat_2)\n\n\n    Welch Two Sample t-test\n\ndata:  groupe_A and groupe_B\nt = -4.0948, df = 53.642, p-value = 0.0001433\nalternative hypothesis: true difference in means is not equal to 0\n95 percent confidence interval:\n -21.883894  -7.496438\nsample estimates:\nmean of x mean of y \n 98.17137 112.86154 \n\n# Visualisation\ndonnees &lt;- data.frame(\n  valeur = c(groupe_A, groupe_B),\n  groupe = rep(c(\"Groupe A\", \"Groupe B\"), each = 30)\n)\n\nggplot(donnees, aes(x = groupe, y = valeur, fill = groupe)) +\n  geom_boxplot(alpha = 0.7) +\n  geom_jitter(width = 0.1, alpha = 0.3) +\n  labs(title = \"Comparaison de deux groupes - Test t\",\n       subtitle = paste(\"p-value =\", round(resultat_2$p.value, 4)),\n       y = \"Valeurs\") +\n  theme_minimal() +\n  theme(legend.position = \"none\")",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Introduction aux tests d'hypothèses</span>"
+    ]
+  },
+  {
+    "objectID": "intro.html#test-t-apparié",
+    "href": "intro.html#test-t-apparié",
+    "title": "1  Introduction aux tests d’hypothèses",
+    "section": "2.3 Test t apparié",
+    "text": "2.3 Test t apparié\nCompare deux mesures sur les mêmes sujets.\n\n# Mesures avant/après\navant &lt;- rnorm(25, mean = 80, sd = 10)\napres &lt;- avant + rnorm(25, mean = 5, sd = 8)\n\nresultat_app &lt;- t.test(avant, apres, paired = TRUE)\nprint(resultat_app)\n\n\n    Paired t-test\n\ndata:  avant and apres\nt = -2.0155, df = 24, p-value = 0.05518\nalternative hypothesis: true mean difference is not equal to 0\n95 percent confidence interval:\n -6.90170559  0.08184579\nsample estimates:\nmean difference \n       -3.40993 \n\n# Visualisation\ndonnees_app &lt;- data.frame(\n  sujet = rep(1:25, 2),\n  score = c(avant, apres),\n  temps = rep(c(\"Avant\", \"Après\"), each = 25)\n)\n\nggplot(donnees_app, aes(x = temps, y = score, group = sujet)) +\n  geom_line(alpha = 0.3) +\n  geom_point(aes(color = temps), size = 2) +\n  stat_summary(aes(group = 1), fun = mean, geom = \"line\", \n               color = \"red\", size = 1.5) +\n  labs(title = \"Test t apparié - Évolution avant/après\",\n       subtitle = paste(\"p-value =\", round(resultat_app$p.value, 4)),\n       y = \"Score\") +\n  theme_minimal()",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Introduction aux tests d'hypothèses</span>"
+    ]
+  },
+  {
+    "objectID": "intro.html#test-de-wilcoxon-pour-échantillon-unique",
+    "href": "intro.html#test-de-wilcoxon-pour-échantillon-unique",
+    "title": "1  Introduction aux tests d’hypothèses",
+    "section": "4.1 Test de Wilcoxon pour échantillon unique",
+    "text": "4.1 Test de Wilcoxon pour échantillon unique\n\n# Données non-normales\nechantillon_skew &lt;- rexp(30, rate = 0.1)\n\nresultat_wilcox &lt;- wilcox.test(echantillon_skew, mu = 10)\nprint(resultat_wilcox)\n\n\n    Wilcoxon signed rank exact test\n\ndata:  echantillon_skew\nV = 266, p-value = 0.5028\nalternative hypothesis: true location is not equal to 10\n\n# Comparaison avec le test t\nresultat_t_skew &lt;- t.test(echantillon_skew, mu = 10)\n\ncat(\"\\nComparaison des p-values:\\n\")\n\n\nComparaison des p-values:\n\ncat(\"Wilcoxon:\", resultat_wilcox$p.value, \"\\n\")\n\nWilcoxon: 0.502761 \n\ncat(\"Test t:\", resultat_t_skew$p.value, \"\\n\")\n\nTest t: 0.1606031",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Introduction aux tests d'hypothèses</span>"
+    ]
+  },
+  {
+    "objectID": "intro.html#test-de-wilcoxon-pour-échantillons-appariés",
+    "href": "intro.html#test-de-wilcoxon-pour-échantillons-appariés",
+    "title": "1  Introduction aux tests d’hypothèses",
+    "section": "4.2 Test de Wilcoxon pour échantillons appariés",
+    "text": "4.2 Test de Wilcoxon pour échantillons appariés\n\n# Données appariées non-normales\navant_skew &lt;- rexp(25, rate = 0.1)\napres_skew &lt;- avant_skew * runif(25, 0.8, 1.3)\n\nresultat_wilcox_app &lt;- wilcox.test(avant_skew, apres_skew, paired = TRUE)\nprint(resultat_wilcox_app)\n\n\n    Wilcoxon signed rank exact test\n\ndata:  avant_skew and apres_skew\nV = 93, p-value = 0.06263\nalternative hypothesis: true location shift is not equal to 0",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Introduction aux tests d'hypothèses</span>"
+    ]
+  },
+  {
+    "objectID": "intro.html#test-de-mann-whitney-wilcoxon-pour-deux-échantillons-indépendants",
+    "href": "intro.html#test-de-mann-whitney-wilcoxon-pour-deux-échantillons-indépendants",
+    "title": "1  Introduction aux tests d’hypothèses",
+    "section": "4.3 Test de Mann-Whitney (Wilcoxon pour deux échantillons indépendants)",
+    "text": "4.3 Test de Mann-Whitney (Wilcoxon pour deux échantillons indépendants)\n\ngroupe_X &lt;- rexp(30, rate = 0.1)\ngroupe_Y &lt;- rexp(30, rate = 0.08)\n\nresultat_mw &lt;- wilcox.test(groupe_X, groupe_Y)\nprint(resultat_mw)\n\n\n    Wilcoxon rank sum exact test\n\ndata:  groupe_X and groupe_Y\nW = 305, p-value = 0.03194\nalternative hypothesis: true location shift is not equal to 0\n\n# Visualisation\ndonnees_mw &lt;- data.frame(\n  valeur = c(groupe_X, groupe_Y),\n  groupe = rep(c(\"Groupe X\", \"Groupe Y\"), each = 30)\n)\n\nggplot(donnees_mw, aes(x = groupe, y = valeur, fill = groupe)) +\n  geom_violin(alpha = 0.7) +\n  geom_boxplot(width = 0.2, fill = \"white\") +\n  labs(title = \"Test de Mann-Whitney\",\n       subtitle = paste(\"p-value =\", round(resultat_mw$p.value, 4)),\n       y = \"Valeurs\") +\n  theme_minimal() +\n  theme(legend.position = \"none\")",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Introduction aux tests d'hypothèses</span>"
+    ]
+  },
+  {
+    "objectID": "intro.html#family-wise-error-rate-fwer",
+    "href": "intro.html#family-wise-error-rate-fwer",
+    "title": "1  Théorie générale des tests statistiques",
+    "section": "2.1 Family-Wise Error Rate (FWER)",
+    "text": "2.1 Family-Wise Error Rate (FWER)\nProbabilité de faire au moins une erreur de type I parmi tous les tests.\nFWER = P(au moins un faux positif)",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Théorie générale des tests statistiques</span>"
+    ]
+  },
+  {
+    "objectID": "intro.html#false-discovery-rate-fdr",
+    "href": "intro.html#false-discovery-rate-fdr",
+    "title": "1  Théorie générale des tests statistiques",
+    "section": "2.2 False Discovery Rate (FDR)",
+    "text": "2.2 False Discovery Rate (FDR)\nProportion attendue de faux positifs parmi les découvertes significatives.\nFDR = E(V/R) où V = nombre de faux positifs, R = nombre de rejets",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Théorie générale des tests statistiques</span>"
+    ]
+  },
+  {
+    "objectID": "intro.html#correction-de-bonferroni",
+    "href": "intro.html#correction-de-bonferroni",
+    "title": "1  Introduction aux tests d’hypothèses",
+    "section": "6.1 Correction de Bonferroni",
+    "text": "6.1 Correction de Bonferroni\nContrôle strictement le FWER en divisant α par le nombre de tests.\nα_corrigé = α / m où m = nombre de tests\n\nalpha &lt;- 0.05\nbonf_threshold &lt;- alpha / n_tests\n\ncat(\"Seuil de Bonferroni:\", bonf_threshold, \"\\n\")\n\nSeuil de Bonferroni: 5e-04 \n\ncat(\"Tests significatifs (non corrigé):\", sum(p_vals &lt; alpha), \"\\n\")\n\nTests significatifs (non corrigé): 10 \n\ncat(\"Tests significatifs (Bonferroni):\", sum(p_vals &lt; bonf_threshold), \"\\n\")\n\nTests significatifs (Bonferroni): 0 \n\n# Avec p.adjust\np_bonf &lt;- p.adjust(p_vals, method = \"bonferroni\")\ncat(\"Tests significatifs (p.adjust):\", sum(p_bonf &lt; alpha), \"\\n\")\n\nTests significatifs (p.adjust): 0",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Introduction aux tests d'hypothèses</span>"
+    ]
+  },
+  {
+    "objectID": "intro.html#correction-de-holm-bonferroni-séquentielle",
+    "href": "intro.html#correction-de-holm-bonferroni-séquentielle",
+    "title": "1  Introduction aux tests d’hypothèses",
+    "section": "6.2 Correction de Holm (Bonferroni séquentielle)",
+    "text": "6.2 Correction de Holm (Bonferroni séquentielle)\nVersion moins conservative de Bonferroni.\n\np_holm &lt;- p.adjust(p_vals, method = \"holm\")\n\ncat(\"Tests significatifs (Holm):\", sum(p_holm &lt; alpha), \"\\n\")\n\nTests significatifs (Holm): 0",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Introduction aux tests d'hypothèses</span>"
+    ]
+  },
+  {
+    "objectID": "intro.html#false-discovery-rate-benjamini-hochberg",
+    "href": "intro.html#false-discovery-rate-benjamini-hochberg",
+    "title": "1  Introduction aux tests d’hypothèses",
+    "section": "6.3 False Discovery Rate (Benjamini-Hochberg)",
+    "text": "6.3 False Discovery Rate (Benjamini-Hochberg)\nContrôle le FDR au lieu du FWER, plus puissant pour les tests multiples.\n\np_fdr &lt;- p.adjust(p_vals, method = \"BH\")\n\ncat(\"Tests significatifs (FDR/BH):\", sum(p_fdr &lt; alpha), \"\\n\")\n\nTests significatifs (FDR/BH): 0",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Introduction aux tests d'hypothèses</span>"
+    ]
+  },
+  {
+    "objectID": "intro.html#comparaison-des-méthodes",
+    "href": "intro.html#comparaison-des-méthodes",
+    "title": "1  Introduction aux tests d’hypothèses",
+    "section": "6.4 Comparaison des méthodes",
+    "text": "6.4 Comparaison des méthodes\n\n# Créer un tableau comparatif\ncomparaison &lt;- data.frame(\n  p_value = p_vals,\n  rang = rank(p_vals),\n  non_corrige = p_vals &lt; alpha,\n  bonferroni = p_bonf &lt; alpha,\n  holm = p_holm &lt; alpha,\n  BH_FDR = p_fdr &lt; alpha\n)\n\n# Résumé\nresume &lt;- data.frame(\n  Methode = c(\"Non corrigé\", \"Bonferroni\", \"Holm\", \"BH (FDR)\"),\n  Significatifs = c(\n    sum(comparaison$non_corrige),\n    sum(comparaison$bonferroni),\n    sum(comparaison$holm),\n    sum(comparaison$BH_FDR)\n  )\n)\n\nprint(resume)\n\n      Methode Significatifs\n1 Non corrigé            10\n2  Bonferroni             0\n3        Holm             0\n4    BH (FDR)             0\n\n# Visualisation\ncomparaison_long &lt;- comparaison %&gt;%\n  select(rang, non_corrige, bonferroni, holm, BH_FDR) %&gt;%\n  pivot_longer(-rang, names_to = \"methode\", values_to = \"significatif\") %&gt;%\n  mutate(methode = factor(methode, \n                          levels = c(\"non_corrige\", \"bonferroni\", \"holm\", \"BH_FDR\"),\n                          labels = c(\"Non corrigé\", \"Bonferroni\", \"Holm\", \"BH (FDR)\")))\n\nggplot(comparaison_long, aes(x = rang, y = methode, fill = significatif)) +\n  geom_tile() +\n  scale_fill_manual(values = c(\"white\", \"darkgreen\"), \n                    labels = c(\"Non significatif\", \"Significatif\")) +\n  labs(title = \"Comparaison des méthodes de correction\",\n       x = \"Rang de la p-value (1 = plus petite)\",\n       y = \"Méthode\",\n       fill = \"\") +\n  theme_minimal() +\n  theme(legend.position = \"bottom\")",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Introduction aux tests d'hypothèses</span>"
+    ]
+  },
+  {
+    "objectID": "intro.html#visualisation-des-seuils-de-décision",
+    "href": "intro.html#visualisation-des-seuils-de-décision",
+    "title": "1  Introduction aux tests d’hypothèses",
+    "section": "6.5 Visualisation des seuils de décision",
+    "text": "6.5 Visualisation des seuils de décision\n\n# Créer un dataframe pour la visualisation\ndf_viz &lt;- data.frame(\n  rang = 1:n_tests,\n  p_value = sort(p_vals)\n) %&gt;%\n  mutate(\n    seuil_standard = alpha,\n    seuil_bonferroni = alpha / n_tests,\n    seuil_BH = (rang / n_tests) * alpha\n  )\n\nggplot(df_viz, aes(x = rang)) +\n  geom_point(aes(y = p_value), alpha = 0.6) +\n  geom_line(aes(y = seuil_standard, color = \"Standard (α = 0.05)\"), \n            size = 1, linetype = \"dashed\") +\n  geom_line(aes(y = seuil_bonferroni, color = \"Bonferroni\"), \n            size = 1) +\n  geom_line(aes(y = seuil_BH, color = \"Benjamini-Hochberg\"), \n            size = 1) +\n  scale_color_manual(values = c(\"red\", \"blue\", \"green\")) +\n  labs(title = \"Seuils de décision selon les méthodes\",\n       x = \"Rang de la p-value\",\n       y = \"P-value\",\n       color = \"Méthode\") +\n  theme_minimal() +\n  theme(legend.position = \"bottom\")",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Introduction aux tests d'hypothèses</span>"
+    ]
+  },
+  {
+    "objectID": "intro.html#choix-de-la-méthode",
+    "href": "intro.html#choix-de-la-méthode",
+    "title": "1  Introduction aux tests d’hypothèses",
+    "section": "7.1 Choix de la méthode",
+    "text": "7.1 Choix de la méthode\n\n\n\nSituation\nMéthode recommandée\n\n\n\n\nNombre limité de tests (&lt; 10)\nBonferroni\n\n\nBesoin de contrôle strict du FWER\nBonferroni ou Holm\n\n\nGrand nombre de tests\nFDR (Benjamini-Hochberg)\n\n\nExploration de données\nFDR (Benjamini-Hochberg)\n\n\nConfirmation d’hypothèses\nBonferroni",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Introduction aux tests d'hypothèses</span>"
+    ]
+  },
+  {
+    "objectID": "intro.html#code-récapitulatif",
+    "href": "intro.html#code-récapitulatif",
+    "title": "1  Introduction aux tests d’hypothèses",
+    "section": "7.2 Code récapitulatif",
+    "text": "7.2 Code récapitulatif\n\n# Fonction pour comparer toutes les méthodes\ncomparer_corrections &lt;- function(p_values, alpha = 0.05) {\n  data.frame(\n    Methode = c(\"Non corrigé\", \"Bonferroni\", \"Holm\", \"Hochberg\", \n                \"Hommel\", \"BH (FDR)\", \"BY (FDR)\"),\n    Significatifs = c(\n      sum(p_values &lt; alpha),\n      sum(p.adjust(p_values, \"bonferroni\") &lt; alpha),\n      sum(p.adjust(p_values, \"holm\") &lt; alpha),\n      sum(p.adjust(p_values, \"hochberg\") &lt; alpha),\n      sum(p.adjust(p_values, \"hommel\") &lt; alpha),\n      sum(p.adjust(p_values, \"BH\") &lt; alpha),\n      sum(p.adjust(p_values, \"BY\") &lt; alpha)\n    )\n  )\n}\n\n# Exemple d'utilisation\ncomparer_corrections(p_vals)\n\n      Methode Significatifs\n1 Non corrigé            10\n2  Bonferroni             0\n3        Holm             0\n4    Hochberg             0\n5      Hommel             0\n6    BH (FDR)             0\n7    BY (FDR)             0",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Introduction aux tests d'hypothèses</span>"
+    ]
+  },
+  {
+    "objectID": "summary.html",
+    "href": "summary.html",
+    "title": "2  Summary",
+    "section": "",
+    "text": "In summary, this book has no content whatsoever.\n\n1 + 1\n\n[1] 2",
+    "crumbs": [
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Summary</span>"
+    ]
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Cours_Tests_statistiques",
+    "section": "",
+    "text": "Preface\nThis is a Quarto book.\nTo learn more about Quarto books visit https://quarto.org/docs/books.\n\n1 + 1\n\n[1] 2",
+    "crumbs": [
+      "Preface"
+    ]
+  },
+  {
+    "objectID": "intro.html#impact-de-la-taille-déchantillon-sur-la-p-valeur",
+    "href": "intro.html#impact-de-la-taille-déchantillon-sur-la-p-valeur",
+    "title": "1  Introduction aux tests d’hypothèses",
+    "section": "2.2 Impact de la taille d’échantillon sur la p-valeur",
+    "text": "2.2 Impact de la taille d’échantillon sur la p-valeur\n\nlibrary(shiny)\nlibrary(ggplot2)\n\nui &lt;- fluidPage(\n  sliderInput(\"n\", \"Taille d'échantillon\", min = 5, max = 200, value = 30),\n  sliderInput(\"mu\", \"Moyenne vraie\", min = 95, max = 105, value = 100),\n  sliderInput(\"sigma\", \"Écart-type\", min = 1, max = 20, value = 10),\n  plotOutput(\"hist\"),\n  verbatimTextOutput(\"test\")\n)\n\nserver &lt;- function(input, output) {\n  x &lt;- reactive(rnorm(input$n, mean = input$mu, sd = input$sigma))\n\n  output$hist &lt;- renderPlot({\n    ggplot(data.frame(x = x()), aes(x)) +\n      geom_histogram(bins = 15, fill = \"steelblue\") +\n      geom_vline(xintercept = 100, color = \"red\", linetype = \"dashed\") +\n      theme_minimal()\n  })\n\n  output$test &lt;- renderPrint({\n    t.test(x(), mu = 100)\n  })\n}\n\nshinyApp(ui, server)\n\nShiny applications not supported in static R Markdown documents",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Introduction aux tests d'hypothèses</span>"
+    ]
+  },
+  {
+    "objectID": "intro.html#test-de-student",
+    "href": "intro.html#test-de-student",
+    "title": "1  Théorie générale des tests statistiques",
+    "section": "1.2 Test de Student",
+    "text": "1.2 Test de Student\nLe test de Student permet de comparer des moyennes.\n\n1.2.1 Test t à un échantillon\nTeste si la moyenne d’un échantillon est différente d’une valeur théorique.\n\n# Générer des données\nechantillon &lt;- rnorm(30, mean = 100, sd = 15)\n\n# H₀: μ = 100 vs H₁: μ ≠ 100\nresultat &lt;- t.test(echantillon, mu = 100)\nprint(resultat)\n\n\n    One Sample t-test\n\ndata:  echantillon\nt = 0.29933, df = 29, p-value = 0.7668\nalternative hypothesis: true mean is not equal to 100\n95 percent confidence interval:\n  93.99927 108.05833\nsample estimates:\nmean of x \n 101.0288 \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n1.2.2 Test t à deux échantillons indépendants\nCompare les moyennes de deux groupes indépendants.\n\n# Générer deux groupes\ngroupe_A &lt;- rnorm(30, mean = 100, sd = 15)\ngroupe_B &lt;- rnorm(30, mean = 110, sd = 15)\n\n# H₀: μ_A = μ_B vs H₁: μ_A ≠ μ_B\nresultat_2 &lt;- t.test(groupe_A, groupe_B)\nprint(resultat_2)\n\n\n    Welch Two Sample t-test\n\ndata:  groupe_A and groupe_B\nt = -4.0948, df = 53.642, p-value = 0.0001433\nalternative hypothesis: true difference in means is not equal to 0\n95 percent confidence interval:\n -21.883894  -7.496438\nsample estimates:\nmean of x mean of y \n 98.17137 112.86154 \n\n# Visualisation\ndonnees &lt;- data.frame(\n  valeur = c(groupe_A, groupe_B),\n  groupe = rep(c(\"Groupe A\", \"Groupe B\"), each = 30)\n)\n\nggplot(donnees, aes(x = groupe, y = valeur, fill = groupe)) +\n  geom_boxplot(alpha = 0.7) +\n  geom_jitter(width = 0.1, alpha = 0.3) +\n  labs(title = \"Comparaison de deux groupes - Test t\",\n       subtitle = paste(\"p-value =\", round(resultat_2$p.value, 4)),\n       y = \"Valeurs\") +\n  theme_minimal() +\n  theme(legend.position = \"none\")\n\n\n\n\n\n\n\n\n\n\n1.2.3 Test t apparié\nCompare deux mesures sur les mêmes sujets.\n\n# Mesures avant/après\navant &lt;- rnorm(25, mean = 80, sd = 10)\napres &lt;- avant + rnorm(25, mean = 5, sd = 8)\n\nresultat_app &lt;- t.test(avant, apres, paired = TRUE)\nprint(resultat_app)\n\n\n    Paired t-test\n\ndata:  avant and apres\nt = -2.0155, df = 24, p-value = 0.05518\nalternative hypothesis: true mean difference is not equal to 0\n95 percent confidence interval:\n -6.90170559  0.08184579\nsample estimates:\nmean difference \n       -3.40993 \n\n# Visualisation\ndonnees_app &lt;- data.frame(\n  sujet = rep(1:25, 2),\n  score = c(avant, apres),\n  temps = rep(c(\"Avant\", \"Après\"), each = 25)\n)\n\nggplot(donnees_app, aes(x = temps, y = score, group = sujet)) +\n  geom_line(alpha = 0.3) +\n  geom_point(aes(color = temps), size = 2) +\n  stat_summary(aes(group = 1), fun = mean, geom = \"line\", \n               color = \"red\", size = 1.5) +\n  labs(title = \"Test t apparié - Évolution avant/après\",\n       subtitle = paste(\"p-value =\", round(resultat_app$p.value, 4)),\n       y = \"Score\") +\n  theme_minimal()",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Théorie générale des tests statistiques</span>"
+    ]
+  },
+  {
+    "objectID": "intro.html#test-de-proportion",
+    "href": "intro.html#test-de-proportion",
+    "title": "1  Théorie générale des tests statistiques",
+    "section": "1.3 Test de proportion",
+    "text": "1.3 Test de proportion\nTeste si une proportion observée diffère d’une proportion théorique.\n\n# Exemple: 55 succès sur 100 essais\n# H₀: p = 0.5 vs H₁: p ≠ 0.5\nresultat_prop &lt;- prop.test(x = 55, n = 100, p = 0.5)\nprint(resultat_prop)\n\n\n    1-sample proportions test with continuity correction\n\ndata:  55 out of 100, null probability 0.5\nX-squared = 0.81, df = 1, p-value = 0.3681\nalternative hypothesis: true p is not equal to 0.5\n95 percent confidence interval:\n 0.4475426 0.6485719\nsample estimates:\n   p \n0.55 \n\n# Test de comparaison de deux proportions\n# Groupe 1: 45/100, Groupe 2: 60/100\nresultat_prop2 &lt;- prop.test(x = c(45, 60), n = c(100, 100))\nprint(resultat_prop2)\n\n\n    2-sample test for equality of proportions with continuity correction\n\ndata:  c(45, 60) out of c(100, 100)\nX-squared = 3.9298, df = 1, p-value = 0.04744\nalternative hypothesis: two.sided\n95 percent confidence interval:\n -0.296847038 -0.003152962\nsample estimates:\nprop 1 prop 2 \n  0.45   0.60 \n\n# Visualisation\nprop_data &lt;- data.frame(\n  groupe = c(\"Groupe 1\", \"Groupe 2\"),\n  proportion = c(45/100, 60/100),\n  n = c(100, 100)\n)\n\nggplot(prop_data, aes(x = groupe, y = proportion, fill = groupe)) +\n  geom_bar(stat = \"identity\", alpha = 0.7) +\n  geom_hline(yintercept = 0.5, linetype = \"dashed\", color = \"red\") +\n  geom_errorbar(aes(ymin = proportion - 1.96*sqrt(proportion*(1-proportion)/n),\n                    ymax = proportion + 1.96*sqrt(proportion*(1-proportion)/n)),\n                width = 0.2) +\n  labs(title = \"Comparaison de proportions\",\n       subtitle = paste(\"p-value =\", round(resultat_prop2$p.value, 4)),\n       y = \"Proportion\") +\n  theme_minimal() +\n  theme(legend.position = \"none\")",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Théorie générale des tests statistiques</span>"
+    ]
+  },
+  {
+    "objectID": "intro.html#test-de-wilcoxon",
+    "href": "intro.html#test-de-wilcoxon",
+    "title": "1  Théorie générale des tests statistiques",
+    "section": "1.4 Test de Wilcoxon",
+    "text": "1.4 Test de Wilcoxon\nTest non-paramétrique alternatif au test t (ne suppose pas la normalité).\n\n1.4.1 Test de Mann-Whitney (Wilcoxon pour deux échantillons indépendants)\n\ngroupe_X &lt;- rexp(30, rate = 0.1)\ngroupe_Y &lt;- rexp(30, rate = 0.08)\n\nresultat_mw &lt;- wilcox.test(groupe_X, groupe_Y)\nprint(resultat_mw)\n\n\n    Wilcoxon rank sum exact test\n\ndata:  groupe_X and groupe_Y\nW = 348, p-value = 0.1342\nalternative hypothesis: true location shift is not equal to 0\n\n# Visualisation\ndonnees_mw &lt;- data.frame(\n  valeur = c(groupe_X, groupe_Y),\n  groupe = rep(c(\"Groupe X\", \"Groupe Y\"), each = 30)\n)\n\nggplot(donnees_mw, aes(x = groupe, y = valeur, fill = groupe)) +\n  geom_violin(alpha = 0.7) +\n  geom_boxplot(width = 0.2, fill = \"white\") +\n  labs(title = \"Test de Mann-Whitney\",\n       subtitle = paste(\"p-value =\", round(resultat_mw$p.value, 4)),\n       y = \"Valeurs\") +\n  theme_minimal() +\n  theme(legend.position = \"none\")",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Théorie générale des tests statistiques</span>"
+    ]
+  },
+  {
+    "objectID": "intro.html#corrections-pour-tests-multiples",
+    "href": "intro.html#corrections-pour-tests-multiples",
+    "title": "1  Théorie générale des tests statistiques",
+    "section": "2.3 Corrections pour tests multiples",
+    "text": "2.3 Corrections pour tests multiples\n\n# Générer des p-values de test\nset.seed(123)\nn_tests &lt;- 100\n# 90 vrais H₀ (non significatifs) et 10 vrais H₁ (significatifs)\np_vals &lt;- c(\n  runif(90, 0.05, 1),  # vrais négatifs\n  runif(10, 0, 0.01)   # vrais positifs\n)\np_vals &lt;- sample(p_vals)  # mélanger\n\n\n2.3.1 Correction de Bonferroni\nContrôle strictement le FWER en divisant α par le nombre de tests.\nα_corrigé = α / m où m = nombre de tests\n\nalpha &lt;- 0.05\nbonf_threshold &lt;- alpha / n_tests\n\ncat(\"Seuil de Bonferroni:\", bonf_threshold, \"\\n\")\n\nSeuil de Bonferroni: 5e-04 \n\ncat(\"Tests significatifs (non corrigé):\", sum(p_vals &lt; alpha), \"\\n\")\n\nTests significatifs (non corrigé): 10 \n\ncat(\"Tests significatifs (Bonferroni):\", sum(p_vals &lt; bonf_threshold), \"\\n\")\n\nTests significatifs (Bonferroni): 0 \n\n# Avec p.adjust\np_bonf &lt;- p.adjust(p_vals, method = \"bonferroni\")\ncat(\"Tests significatifs (p.adjust):\", sum(p_bonf &lt; alpha), \"\\n\")\n\nTests significatifs (p.adjust): 0 \n\n\n\n\n2.3.2 Correction de Holm (Bonferroni séquentielle)\nVersion moins conservative de Bonferroni.\n\np_holm &lt;- p.adjust(p_vals, method = \"holm\")\n\ncat(\"Tests significatifs (Holm):\", sum(p_holm &lt; alpha), \"\\n\")\n\nTests significatifs (Holm): 0 \n\n\n\n\n2.3.3 False Discovery Rate (Benjamini-Hochberg)\nContrôle le FDR au lieu du FWER, plus puissant pour les tests multiples.\n\np_fdr &lt;- p.adjust(p_vals, method = \"BH\")\n\ncat(\"Tests significatifs (FDR/BH):\", sum(p_fdr &lt; alpha), \"\\n\")\n\nTests significatifs (FDR/BH): 0 \n\n\n\n\n2.3.4 Comparaison des méthodes\n\n# Créer un tableau comparatif\ncomparaison &lt;- data.frame(\n  p_value = p_vals,\n  rang = rank(p_vals),\n  non_corrige = p_vals &lt; alpha,\n  bonferroni = p_bonf &lt; alpha,\n  holm = p_holm &lt; alpha,\n  BH_FDR = p_fdr &lt; alpha\n)\n\n# Résumé\nresume &lt;- data.frame(\n  Methode = c(\"Non corrigé\", \"Bonferroni\", \"Holm\", \"BH (FDR)\"),\n  Significatifs = c(\n    sum(comparaison$non_corrige),\n    sum(comparaison$bonferroni),\n    sum(comparaison$holm),\n    sum(comparaison$BH_FDR)\n  )\n)\n\nprint(resume)\n\n      Methode Significatifs\n1 Non corrigé            10\n2  Bonferroni             0\n3        Holm             0\n4    BH (FDR)             0\n\n# Visualisation\ncomparaison_long &lt;- comparaison %&gt;%\n  select(rang, non_corrige, bonferroni, holm, BH_FDR) %&gt;%\n  pivot_longer(-rang, names_to = \"methode\", values_to = \"significatif\") %&gt;%\n  mutate(methode = factor(methode, \n                          levels = c(\"non_corrige\", \"bonferroni\", \"holm\", \"BH_FDR\"),\n                          labels = c(\"Non corrigé\", \"Bonferroni\", \"Holm\", \"BH (FDR)\")))\n\nggplot(comparaison_long, aes(x = rang, y = methode, fill = significatif)) +\n  geom_tile() +\n  scale_fill_manual(values = c(\"white\", \"darkgreen\"), \n                    labels = c(\"Non significatif\", \"Significatif\")) +\n  labs(title = \"Comparaison des méthodes de correction\",\n       x = \"Rang de la p-value (1 = plus petite)\",\n       y = \"Méthode\",\n       fill = \"\") +\n  theme_minimal() +\n  theme(legend.position = \"bottom\")\n\n\n\n\n\n\n\n\n\n\n2.3.5 Visualisation des seuils de décision\n\n# Créer un dataframe pour la visualisation\ndf_viz &lt;- data.frame(\n  rang = 1:n_tests,\n  p_value = sort(p_vals)\n) %&gt;%\n  mutate(\n    seuil_standard = alpha,\n    seuil_bonferroni = alpha / n_tests,\n    seuil_BH = (rang / n_tests) * alpha\n  )\n\nggplot(df_viz, aes(x = rang)) +\n  geom_point(aes(y = p_value), alpha = 0.6) +\n  geom_line(aes(y = seuil_standard, color = \"Standard (α = 0.05)\"), \n            size = 1, linetype = \"dashed\") +\n  geom_line(aes(y = seuil_bonferroni, color = \"Bonferroni\"), \n            size = 1) +\n  geom_line(aes(y = seuil_BH, color = \"Benjamini-Hochberg\"), \n            size = 1) +\n  scale_color_manual(values = c(\"red\", \"blue\", \"green\")) +\n  labs(title = \"Seuils de décision selon les méthodes\",\n       x = \"Rang de la p-value\",\n       y = \"P-value\",\n       color = \"Méthode\") +\n  theme_minimal() +\n  theme(legend.position = \"bottom\")\n\nWarning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.\nℹ Please use `linewidth` instead.",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Théorie générale des tests statistiques</span>"
+    ]
+  },
+  {
+    "objectID": "intro.html#recommandations-pratiques",
+    "href": "intro.html#recommandations-pratiques",
+    "title": "1  Théorie générale des tests statistiques",
+    "section": "2.4 Recommandations pratiques",
+    "text": "2.4 Recommandations pratiques\n\n2.4.1 Choix de la méthode\n\n\n\nSituation\nMéthode recommandée\n\n\n\n\nNombre limité de tests (&lt; 10)\nBonferroni\n\n\nBesoin de contrôle strict du FWER\nBonferroni ou Holm\n\n\nGrand nombre de tests\nFDR (Benjamini-Hochberg)\n\n\nExploration de données\nFDR (Benjamini-Hochberg)\n\n\nConfirmation d’hypothèses\nBonferroni\n\n\n\n\n\n2.4.2 Code récapitulatif\n\n# Fonction pour comparer toutes les méthodes\ncomparer_corrections &lt;- function(p_values, alpha = 0.05) {\n  data.frame(\n    Methode = c(\"Non corrigé\", \"Bonferroni\", \"Holm\", \"Hochberg\", \n                \"Hommel\", \"BH (FDR)\", \"BY (FDR)\"),\n    Significatifs = c(\n      sum(p_values &lt; alpha),\n      sum(p.adjust(p_values, \"bonferroni\") &lt; alpha),\n      sum(p.adjust(p_values, \"holm\") &lt; alpha),\n      sum(p.adjust(p_values, \"hochberg\") &lt; alpha),\n      sum(p.adjust(p_values, \"hommel\") &lt; alpha),\n      sum(p.adjust(p_values, \"BH\") &lt; alpha),\n      sum(p.adjust(p_values, \"BY\") &lt; alpha)\n    )\n  )\n}\n\n# Exemple d'utilisation\ncomparer_corrections(p_vals)\n\n      Methode Significatifs\n1 Non corrigé            10\n2  Bonferroni             0\n3        Holm             0\n4    Hochberg             0\n5      Hommel             0\n6    BH (FDR)             0\n7    BY (FDR)             0",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Théorie générale des tests statistiques</span>"
+    ]
+  },
+  {
+    "objectID": "intro.html#test-de-student-ou-t-test",
+    "href": "intro.html#test-de-student-ou-t-test",
+    "title": "1  Théorie générale des tests statistiques",
+    "section": "1.2 Test de Student (ou t test)",
+    "text": "1.2 Test de Student (ou t test)\nLe test de Student permet une comparaison simple mais importante, celle des moyennes entre deux groupes. La statistique de test est définie ainsi\n\\[\nt = c \\, \\frac{\\bar{m}_1 - \\bar{m}_2}{s}\n\\]\nOù \\(\\bar{m}_1\\) et \\(\\bar{m}_2\\) sont les moyennes respectives des deux groupes, \\(c\\) est une constante dépendante de la taille d’échantillon, \\(s^{2}\\) est l’estimateur sans biais de la variance globale. \\[\n\\bar{m}_1 = \\frac{1}{n_1} \\sum_{i=1}^{n_1} x_{1,i}\n\\qquad\n\\bar{m}_2 = \\frac{1}{n_2} \\sum_{i=1}^{n_2} x_{2,i}\n\\]\n\\(s_1^2\\) et \\(s_2^2\\) sont les estimateurs sans biais de la variance intra-groupe.\n\\[\ns_1^2 = \\frac{1}{n_1 - 1} \\sum_{i=1}^{n_1} (x_{1,i} - \\bar{m}_1)^2\n\\qquad\ns_2^2 = \\frac{1}{n_2 - 1} \\sum_{i=1}^{n_2} (x_{2,i} - \\bar{m}_2)^2\n\\]\n\\[\ns =\n\\sqrt{\n\\frac{(n_1 - 1)s_1^2 + (n_2 - 1)s_2^2}\n     {n_1 + n_2 - 2}\n}\n\\]\n\\[\nc = \\sqrt{\\frac{n_1 n_2}{n_1 + n_2}}\n\\]\n\n\n\n\n1.2.1 Test de Student à deux échantillons indépendants\nCompare les moyennes de deux groupes indépendants : trt2 (n=10) et crtl (n=10).\n\n\n\n\n\n\n\nExemple de données de deux groupes\n\n\n\n\n\ntt &lt;- with(exemple_data,\n          t.test(weight[group ==\"ctrl\"],\n                 weight[group ==\"trt2\"],\n                 var.equal = TRUE))\ntt\n\n\n    Two Sample t-test\n\ndata:  weight[group == \"ctrl\"] and weight[group == \"trt2\"]\nt = -2.134, df = 18, p-value = 0.04685\nalternative hypothesis: true difference in means is not equal to 0\n95 percent confidence interval:\n -0.980338117 -0.007661883\nsample estimates:\nmean of x mean of y \n    5.032     5.526 \n\n\nOn observe une différence entre mes deux groupes de faible échantillon, que ce passerait-il si on augmente artificiellement la taille d’échantillon en dupliquant les données ? Je conserve le même groupe\n\n\n\n\n\n\n\n\n\n\ndata_k &lt;- exemple_data %&gt;%\n  slice(rep(row_number(), times = 10))\n\ntt_10 &lt;- with(\n  data_k,\n  t.test(\n    weight[group == \"ctrl\"],\n    weight[group == \"trt2\"],\n    var.equal = TRUE\n  )\n)\ntt_10\n\n\n    Two Sample t-test\n\ndata:  weight[group == \"ctrl\"] and weight[group == \"trt2\"]\nt = -7.0777, df = 198, p-value = 2.483e-11\nalternative hypothesis: true difference in means is not equal to 0\n95 percent confidence interval:\n -0.6316394 -0.3563606\nsample estimates:\nmean of x mean of y \n    5.032     5.526 \n\n\nDans cet exemple j’ai dupliqué dix fois le jeu de données, on peut voir que les moyennes sont identiques mais que la pvalue associée est bien plus basse :\n\nLa puissance statistique associée au test de Student est dépendante de la taille d’échantillon. Plus le nombre d’observations est élevé, plus les résultats seront significatifs.",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Théorie générale des tests statistiques</span>"
+    ]
+  }
+]
