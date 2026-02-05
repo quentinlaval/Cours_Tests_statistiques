@@ -1,44 +1,3 @@
-# General Theory of Statistical Tests
-
-Hypothesis testing is a fundamental concept in the scientific world. The purpose of hypothesis testing is to present a decision rule, established before using sample results, that allows a choice to be made between two statistical hypotheses.
-
-## Key concepts
-
-What is a statistical hypothesis?
-It is an *a priori* statement about one or more characteristics of a population, such as the value of parameters or the distribution of observations.
-
-There are two types of hypotheses:
-
--   **Null hypothesis (H₀)**: The hypothesis submitted to statistical testing and considered true for the test, $H_0$, is often a simple model or a defined value of a parameter. For example, there is no difference between the means of two groups. $H_0$ : $\mu_1 = \mu_2$ 
-  
--   **Alternative hypothesis (H₁)**: hypothesis different from $H_0$, commonly its opposite. Example $H_1$: $\mu_1 ≠ \mu_2$
-
-What is type-I and type-II errors ?
-
--   **α Type I error (false positive)**: It is the probability to reject $H_0$ when $H_0$ is **true**. In other words, it's the risk of incorrectly concluding, based on the results obtained, that there is a real difference when in fact it is due to chance. Example: a player plays roulette, spins the wheel 6 times, and sees 4 red numbers and 2 black numbers come up. He concludes that there are twice as many red numbers as black numbers.
-
-::: {.column-margin}
-```{r echo=FALSE}
-#| fig-width: 1.5
-#| fig-height: 1.5
-#| fig-cap: "Figure 1: example of the roulette game"
-knitr::include_graphics("Images/roulette.png")
-```
-:::
-
--   **β Type II error (false negative)**: It's the probability of **not** rejecting $H_0$ when $H_0$ is false. In other words, it is the risk of wrongly concluding that there is no difference when there is actually a difference.
-
-
-Statistical power, it is the probability to reject $H_0$ when $H_0$ is false. $Power = 1 - \beta$
-
-Table: Table 1: Hypothesis testing, types of error
-
- | Your decision/Reality | **$H_0$ is true** | **$H_0$ is false**|
- |-----------------------|-------------------|-------------------|
- | **Do not reject $H_0$** (test non-significant) | **Correct** decision | Wrong decision |
- | **Reject $H_0$**  (test significant)           | Wrong decision       | **Correct decision** |
-
-
 ```{r setup, echo=FALSE, message=FALSE, warning=FALSE}
 library(tidyverse)
 library(ggplot2)
@@ -48,84 +7,124 @@ library(DESeq2)
 library(airway)
 library(purrr)
 library(tibble)
-set.seed(42)
+library(emoji)
+library(fontawesome)
+set.seed(2026)
 ```
 
-## Student's test (ou t test)
+# General Theory of Statistical Tests
 
-The Student's t-test allows for a simple but important comparison: that of the means between two groups. The test statistic is defined as
+Hypothesis testing is a fundamental concept in the scientific world. The purpose of hypothesis testing is to present a decision rule, established before using sample results, that allows a choice to be made between two statistical hypotheses.
+
+## Key concepts
+
+What is a **statistical hypothesis**? It is an *a priori* statement about one or more characteristics of a population, such as the value of parameters or the distribution of observations.
+
+⚠️ *such an hypothesis **cannot** depend on the data upon which it will be tested !* Otherwise, you risk to suffer from optimism boas (a.k.a. over-fitting) via a phenomenon usually refered to as *double-dipping* (see @kriegeskorte2009circular for instance).
+
+In this framework, two hypotheses are opposed:
+
+-   **Null hypothesis (H₀)**: The hypothesis submitted to statistical testing and considered true for the test, $H_0$, is often a simple model or a defined value of a parameter. For example, there is no difference between the means of two groups. $H_0$ : $\mu_1 = \mu_2$
+
+-   **Alternative hypothesis (H₁)**: hypothesis different from $H_0$, commonly its opposite. Example $H_1$: $\mu_1 ≠ \mu_2$
+
+What are type I and type II errors ?
+
+ - **α Type I error (false positive)**: the probability to **reject $H_0$ when $H_0$ is true**. In other words, it's the risk of incorrectly concluding (based on the obtained results) that there is a real difference, *when in fact there is none* (it is only observed because of random sampling fluctuations). 
+
+Example: a player plays roulette, spins the wheel 6 times, and sees 4 red numbers and 2 black numbers come up. He concludes that there are twice as many red numbers as black numbers.
+
+::: column-margin
+```{r echo=FALSE}
+#| fig-width: 1.5
+#| fig-height: 1.5
+#| fig-cap: "Figure 1: example of the roulette game"
+knitr::include_graphics("Images/roulette.png")
+```
+:::
+
+-   **β Type II error (false negative)**: the probability of **not rejecting $H_0$ when $H_0$ is false**. In other words, it is the risk of wrongly concluding that there is no difference, *when there actually is a difference*.
+
+Statistical power, it is the probability to reject $H_0$ when $H_0$ is false:
+$$\textsf{Power} = 1 - \beta$$
+
+| <span style="color:#6f42c1; font-weight:bold;">Decision</span>  \\ <span style="color:#0d6efd; font-weight:bold;">Reality</span> | <span style="color:#0d6efd; font-weight:bold;">$H_0$ true</span> | <span style="color:#0d6efd; font-weight:bold;">$H_0$ false</span> |
+|-------------------|---------------|----------------|
+| <span style="color:#6f42c1; font-weight:bold;">**Do not reject $H_0$**</span> | <span style="background:#e8f5e9; padding:4px 8px; border-radius:4px;">✔ Correct</span> | <span style="background:#fff3cd; padding:4px 8px; border-radius:4px;">Type II error $\beta$</span> |
+| <span style="color:#6f42c1; font-weight:bold;">**Reject $H_0$**</span> | <span style="background:#f8d7da; padding:4px 8px; border-radius:4px;">Type I error $\alpha$</span> | <span style="background:#e8f5e9; padding:4px 8px; border-radius:4px;">✔ Correct</span> |
+
+: Table 1: Hypothesis testing, types of error
+
+
+## Student's *t*-test
+
+The Student's *t*-test compares the means between two groups. The test statistic is defined as
 
 $$
 t = c \, \frac{\bar{m}_1 - \bar{m}_2}{s}
 $$
 
-With $\bar{m}_1$ and $\bar{m}_2$ are the means of the values in the two groups,
-$c$ is a constant depending on the sample sizes, $s$ is pooled standard deviation.
-$$
-\bar{m}_1 = \frac{1}{n_1} \sum_{i=1}^{n_1} x_{1,i}
-\qquad
-\bar{m}_2 = \frac{1}{n_2} \sum_{i=1}^{n_2} x_{2,i}
-$$
+-   $\bar{m}_1$ and $\bar{m}_2$ are the means observed in each group respectively, [^intro-1]
+-   $c$ is a constant depending on the sample sizes, [^intro-2]
+-   $s$ is the pooled standard deviation. [^intro-3]
 
-$s_1^2$ and $s_2^2$ are unbiased estimators of the intra-group variance.
+[^intro-1]: $\bar{m}_1 = \frac{1}{n_1} \sum_{i=1}^{n_1} x_{1,i} \qquad \bar{m}_2 = \frac{1}{n_2} \sum_{i=1}^{n_2} x_{2,i}$
 
-$$
-s_1^2 = \frac{1}{n_1 - 1} \sum_{i=1}^{n_1} (x_{1,i} - \bar{m}_1)^2
-\qquad
-s_2^2 = \frac{1}{n_2 - 1} \sum_{i=1}^{n_2} (x_{2,i} - \bar{m}_2)^2
-$$
-
-
-$$
-s =
-\sqrt{
-\frac{(n_1 - 1)s_1^2 + (n_2 - 1)s_2^2}
+[^intro-2]: $s_1^2$ and $s_2^2$ are unbiased estimators of the intra-group variance: $$
+    s_1^2 = \frac{1}{n_1 - 1} \sum_{i=1}^{n_1} (x_{1,i} - \bar{m}_1)^2
+    \qquad
+    s_2^2 = \frac{1}{n_2 - 1} \sum_{i=1}^{n_2} (x_{2,i} - \bar{m}_2)^2
+    $, then $s =
+    \sqrt{
+    \frac{(n_1 - 1)s_1^2 + (n_2 - 1)s_2^2}
      {n_1 + n_2 - 2}
-}
-$$
+    }
+    $$
 
-$$
-c = \sqrt{\frac{n_1 n_2}{n_1 + n_2}}
-$$
+[^intro-3]: $c = \sqrt{\frac{n_1 n_2}{n_1 + n_2}}$
 
+### Student 2-sample *t*-test in `r fontawesome::fa("r-project")`
 
-### Student two-sample test
-
-Compare the means of two independent groups: trt2 ($n=10$) et crtl ($n=10$).
+Compare the means of two independent groups: Treatment ($n=10$) et crtl ($n=10$).
 
 **Assumptions**:
 
-The distributions of the two groups must be Normally distributed.
-
+The distributions of the two groups is assumed to be Normal. In practice, this assumption is very easily met, see [@lumley2002importance]
 
 ```{r, echo=FALSE}
 data("PlantGrowth")
-exemple_data <- PlantGrowth %>% filter(group != "trt1")
+exemple_data <- PlantGrowth |> filter(group != "trt1")
+levels(exemple_data$group) <- c("Control", "trt1", "Treatment")
 ```
 
-::: {.column-margin}
-```{r test-t-two-samples, echo=FALSE, warning=FALSE, message=FALSE}
+::: column-margin
+```{r test-t-two-samples, echo=FALSE, cache=TRUE}
 #| fig-width: 3
 #| fig-height: 3
 #| fig-cap: "Figure 2: Data example of two groups."
 ggplot(exemple_data, aes(y = weight, x = group, col = group)) +
   geom_point() + 
-  theme(legend.position = "none")
+  theme_classic() +
+  theme(legend.position = "none") +
+  MetBrewer::scale_color_met_d("Johnson") +
+  labs(y="Weight", x="Group")
 
 ```
 :::
 
 ```{r}
 tt <- with(exemple_data,
-          t.test(weight[group =="ctrl"],
-                 weight[group =="trt2"],
+          t.test(weight[group =="Control"],
+                 weight[group =="Treatment"],
                  var.equal = TRUE))
 tt
 ```
 
-There is a difference between my two small sample groups. What would happen if we artificially increased the sample size by duplicating the data? I am keeping the same groups.
+There is a statistically significant difference between my 2 (small) groups. 
 
-```{r, echo=FALSE, message=FALSE, warning=FALSE}
+Now, what would happen if we artificially increased the sample size by duplicating the data (I am keeping the same groups here).
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, cache=TRUE}
 #| fig-cap: "Figure 3: Graph showing the evolution of the p-value (log scale) as a function of sample size per group."
 
 compute_pvalue <- function(data, k) {
@@ -136,8 +135,8 @@ compute_pvalue <- function(data, k) {
   tt <- with(
     data_k,
     t.test(
-      weight[group == "ctrl"],
-      weight[group == "trt2"],
+      weight[group == "Control"],
+      weight[group == "Treatment"],
       var.equal = TRUE
     )
   )
@@ -182,7 +181,6 @@ transition_reveal(along = n_per_group)+
   ease_aes("linear")
 
 animated_plot
-
 ```
 
 ```{r, echo=FALSE}
@@ -192,55 +190,51 @@ data_k <- exemple_data %>%
 tt_10 <- with(
   data_k,
   t.test(
-    weight[group == "ctrl"],
-    weight[group == "trt2"],
+    weight[group == "Control"],
+    weight[group == "Treatment"],
     var.equal = TRUE
   )
 )
 tt_10
 ```
-In this example, I duplicated the dataset 10 times. We can see that the means are **identical**, but the associated p-value is much **lower**:
 
--   The statistical power associated with Student's t-test depends on the sample size. The greater the number of observations, the more significant the results will be.
+In this example, I duplicated the dataset 10 times (notice the increased degrees of freedom in the output above). We can see that the means are **identical** as before, but the associated p-value is *much* **lower**:
 
----
+-   The statistical power associated with Student's t-test **depends on the sample size** ! The greater the number of observations, the more significant the results can be.
 
-**Exercise** : Reproduce figure 3 using simulated data from a normal distribution: 
-group 1 $\mathcal{N}(10,\,1)$ ; group 2 $\mathcal{N}(10.5,\,1)$. For each groups, the initial sample size is 20.
+------------------------------------------------------------------------
+
+👉 **Exercise** : Reproduce figure 3 using simulated data from a normal distribution: group 1 $\mathcal{N}(10,\,1)$ ; group 2 $\mathcal{N}(10.5,\,1)$. For each groups, the initial sample size is 20.
+
+
 
 ## Wilcoxon test
 
 ### Wilcoxon two-sample test
 
-The Wilcoxon two-sample test is a nonparametric test because no particular
-assumption is made to the distribution of the data, and it can be perform in very small sample size. The main idea of this test is to ranks all of the data and calculates the sum of the ranks for one of the groups. The null hypothesis $H_0$ is that the **two groups have identical distribution**.
+The Wilcoxon two-sample test is a nonparametric test because no particular assumption is made to the distribution of the data, and it can be perform in very small sample size. The main idea of this test is to ranks all of the data and calculates the sum of the ranks for one of the groups. The null hypothesis $H_0$ is that the **two groups have identical distribution**.
 
-⚠️
+⚠️ **One falsehood** often said about this test is that it would test median equality: this test can be use as a median test **only** if the distribution in the two groups is known to have the **same shape**.
 
-**One not correct thing** about this test is it can be describe as a test for the median. This test can be use as a median test **only** if the distribution in the two groups is known to have the **same shape**.
+⚠️ **Test Statistic:** we will use the **sum of the ranks of the group with the smallest sample size, denoted as $SR$. $n_{\min}$ is the minimum between `group1` and `group2` (and $n_{\max}$ is the maximum between group1 and group2).
 
-⚠️
-
-**Test Statistic**
-We will use $SR$, the sum of the ranks of the group with the smallest sample size. $n_{\min}$ is the minimum between group1 and group2 (and $n_{\max}$ is the maximum between group1 and group2).
-
--   **When $n_{\min} < 10$:**
+-   **When** $n_{\min} < 10$:
 
 $C = SR - \frac{n_{\min}(n_{\min} + 1)}{2} \sim_{H_0} \text{centered Wilcoxon}(n_{\min}, n_{\max})$
 
----
+------------------------------------------------------------------------
 
--   **When $n_{\min} > 10$:** 
+-   **When** $n_{\min} > 10$:
 
-$SR$ is approximately Normally distributed:
+$SR$'s distribution can be approximated with the Normal distribution:
 
 $SR \sim_{H_0} \mathcal{N}\!\left(\frac{n_{\min}(n_{\min} + n_{\max} + 1)}{2} \; ; \; \sqrt{\frac{n_{\max}}{6}\left(\frac{n_{\min}(n_{\min} + n_{\max} + 1)}{2}\right)}\right)$
 
-The test statistic **$U$** is:
+The test statistic used is then:
 
 $U = \frac{SR - \frac{n_{\min}(n_{\min} + 1)}{2}}{\sqrt{\frac{n_{\max}}{6}\left(\frac{n_{\min}(n_{\min} + n_{\max} + 1)}{2}\right)}} \sim_{H_0} N(0, 1)$
 
----
+------------------------------------------------------------------------
 
 ```{r plot-wilcoxon, echo=FALSE, warning=FALSE, message=FALSE}
 #| fig-cap: "Figure 4: Plot of two distributions with identical median."
@@ -288,37 +282,33 @@ ggplot(data, aes(x = valeur, fill = groupe, color = groupe)) +
 
 ```
 
-
 ## Fisher's Exact Test
 
-Fisher’s exact test is a non-parametric statistical test used to assess the independence between two binary variables in a $2×2$ contingency table. It is most commonly applied when the assumptions underlying $\chi^2$ test and Yates's $\chi^2$ test are not valid.
-️
-⚠️
+Fisher’s exact test is a non-parametric statistical test used to assess the independence between two binary variables in a $2 \times 2$ contingency table. It is most commonly applied when the assumptions underlying $\chi^2$ test and Yates's $\chi^2$ test are not valid. ️
 
-This test assumes that the data are independent of each other, so care must be taken with statistical individuals (e.g., in single-cell data coming from the same patient).
+⚠️ This test assumes that the data are independent of each other, so care must be taken with statistical individuals (e.g., in single-cell data coming from the same patient).
 
-⚠️
 
-Table: Table 3: Contingency table
+|                   | **Smoke** | **Don't smoke** | *Total* |
+|-------------------|-----------|-----------------|---------|
+| **$ \< 40 yo$**   | $a$       | $b$             | $n1$    |
+| **$ \>40 yo$**    | $c$       | $d$             | $n2$    |
+| *Total*           | $m1$      | $m2$            | $N$     |
 
- |  | **Smoke** | **Don't smoke** | *Total* |
- |-----------------------|-------------------|-------------------|-------------------|
- | **$ < 40 yo$** | $a$ | $b$ | $n1$ |
- | **$ >40 yo$** | $c$ | $d$ | $n2$ |
- | *Total* | $m1$| $m2$ | $N$ |
- 
- $H_0$: The two variables are independent
- 
- $p_{abcd}$ is the probability that $Y=a$ with n1, m1 and N known, fixed. 
- 
- $p_{abcd} = \mathbb{P}\!\left( Y = a \mid n1,\; m1,\; N \right)$
- 
- $Y \sim Hypergeometric(m1, N-m1, N)$
- 
- So $p_{abcd} = \dfrac{(a + b)! * (c + d)! *(a + c)! *(b + d)!}{a!* \, b!* \, c!* \, d!* \, n!}$
+: Table 3: Contingency table
+
+$H_0$: The two variables are independent
+
+$p_{abcd}$ is the probability that $Y=a$ with n1, m1 and N known, fixed.
+
+$p_{abcd} = \mathbb{P}\!\left( Y = a \mid n1,\; m1,\; N \right)$
+
+$Y \sim Hypergeometric(m1, N-m1, N)$
+
+So $p_{abcd} = \dfrac{(a + b)! * (c + d)! *(a + c)! *(b + d)!}{a!* \, b!* \, c!* \, d!* \, n!}$
 
 To help to understand this probability, we will use numerical examples.
- 
+
 ```{r test-proportion}
 
 tab <- matrix(
@@ -407,26 +397,29 @@ print(paste0("Manual pvalue = ", p_value_manual,
 
 ```
 
-
 # Multiple testing
 
-## P-hACKing, P-hARKing
+## P-ha*C*king, P-ha*R*king
 
-Two important concepts with p-values:
--   P-hacking : Manipulation of statistical analysis until an artificially low p-value below the defined $\alpha$ threshold is obtained. Example: round the p-value ; lot of hypotheses testing without adjustment ; choose a data transformation to obtain a low p-value.
+Two important concepts with p-values: 
 
--   P-hARKing : Modify or establish new assumptions after seeing results.
+ - **P-ha*C*king**: manipulation of statistical analysis until an artificially low p-value below the defined $\alpha$ threshold is obtained (e.g. round the p-value ; lot of hypotheses testing without adjustment ; choose a data transformation to obtain a low p-value...)
 
-In this section, we will focus on multiple testing to avoid one aspect of p-hacking. When multiple tests are performed simultaneously, the Family-Wise Error Rate increases, here is an illustrative example.
+ - **P-ha*R*king**: modify or establish new assumptions after seeing results.
 
-You are playing Russian roulette with a **Smith & Wesson** revolver, an 8-rounds revolver. Before each game, you spin the chamber and play: 
+In this section, we will focus on multiple testing to avoid one aspect of p-hacking. 
 
--   1 time, the probability to die is $1/8$ => **12.5%**
--   2 times, the probability to die is $1 - (1- 1/8)^2$ => **≈ 23.4%** 
--   10 times, the probability to die is $1 - (1- 1/8)^{10}$ => **≈ 73.7%** 
--   30 times, the probability to die is $1 - (1- 1/8)^{30}$ => **≈ 98.2%** 
 
-::: {.column-margin}
+When multiple tests are performed simultaneously, the Family-Wise Error Rate increases, here is an illustrative example.
+
+You are playing Russian roulette with an 8-rounds **Smith & Wesson** revolver. Before each "game", you spin the chamber and press the trigger:
+
+-   1 time, the probability to die is $1/8$ =\> **12.5%**
+-   2 times, the probability to die is $1 - (1- 1/8)^2$ =\> **≈ 23.4%**
+-   10 times, the probability to die is $1 - (1- 1/8)^{10}$ =\> **≈ 73.7%**
+-   30 times, the probability to die is $1 - (1- 1/8)^{30}$ =\> **≈ 98.2%**
+
+::: column-margin
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
 #| fig-width: 1.5
 #| fig-height: 1.5
@@ -435,7 +428,7 @@ knitr::include_graphics("Images/revolver.jpg")
 ```
 :::
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE}
+```{r, echo=FALSE, warning=FALSE, message=FALSE, cache=TRUE}
 #| fig-cap: "Figure 6: Probability to die in Russian roulette (with a Smith & Wesson) relative to the number of attempts"
 # Nombre de parties
 n <- 1:40
@@ -463,31 +456,39 @@ ggplot(df, aes(x = parties, y = prob_mort)) +
 
 ```
 
-Table: Table 2: Multiple testing, types of errors.
+| <span style="color:#6f42c1; font-weight:bold;">Decision</span> \\ <span style="color:#0d6efd; font-weight:bold;">Reality</span> | <span style="color:#0d6efd; font-weight:bold;">$H_0$ true</span> | <span style="color:#0d6efd; font-weight:bold;">$H_0$ false</span> | <span style="font-weight:bold;">Total</span> |
+|-----------------------------------------|-----------------------|------------------------|----------------|
+| <span style="color:#6f42c1; font-weight:bold;">Do not reject $H_0$</span> | <span style="background:#e8f5e9; padding:4px 8px; border-radius:4px;">$U$</span> | <span style="background:#fff3cd; padding:4px 8px; border-radius:4px;">$T$</span> | $m - R$ |
+| <span style="color:#6f42c1; font-weight:bold;">Reject $H_0$</span>        | <span style="background:#f8d7da; padding:4px 8px; border-radius:4px;">$V$</span> | <span style="background:#e8f5e9; padding:4px 8px; border-radius:4px;">$S$</span> | $R$ |
+| **Total**                               | $m_0$                 | $m - m_0$              | $m$ |
 
- | Your decision/Reality | **$H_0$ is true** | **$H_0$ is false**| **Total**|
- |-----------------------|-------------------|-------------------|-------------------|
- | **Do not reject $H_0$** (test non-significant) | $U$ | $T$ | $m -R$ |
- | **Reject $H_0$**  (test significant)           | $V$ | $S$ | $R$ |
- | **Total** | $m_0$ | $m - m_0$ | $m$ |
 
-**$m$** total number of tests ; **$m_0$** number of true $H_0$ ; **$m - m_0$** number of false $H_0$ ; **$V$** number of false positives (type-I error) ; **$T$** number of false negative (type-II error) ; **$S$** number of true positive ; **$U$** number of true negative ; **$R$** number of rejections
+
+: Table 2: Multiple testing, types of errors.
+
+ - $m$ total number of tests ; 
+ - $m_0$ number of true $H_0$ ; 
+ - $m - m_0$ number of false $H_0$ ; 
+ - $V$ number of false positives (type-I error) ; 
+ - $T$ number of false negative (type-II error) ; 
+ - $S$ number of true positive ; 
+ - $U$ number of true negative ; 
+ - $R$ number of rejections
+
 
 ## Family-Wise Error Rate (FWER)
 
-Probability to get **at least** one false positive,
-knowing the true null hypotheses
+Probability to get **at least** one false positive, knowing the true null hypotheses
 
-**FWER = P(at least one false positive)** ou **$P(V>0 | m_0)$**
+**FWER = P(at least one false positive)** ou $P(V>0 | m_0)$
 
-We want to stricly control number the number of false positives.
-Apply we **$m$** is pretty small.
+We want to stricly control number the number of false positives. Apply we $m$ is pretty small.
 
 ### Bonferroni method
 
-Stricly control FWER. How it works ? Divide **$\alpha$** by number of test **$m$**.
+Stricly control FWER. How it works ? Divide $\alpha$ by number of test $m$.
 
-**reject hypothesis if *p-value* $< \alpha / m$**
+**reject hypothesis if *p-value*** $< \alpha / m$
 
 ```{r bonferroni, echo=FALSE, warning=FALSE, message=FALSE}
 #| fig-cap: "Figure 7: FWER versus number of tests."
@@ -518,9 +519,9 @@ ggplot(df, aes(x = test, y = value, colour = Adjustement)) +
 
 ```
 
----
+------------------------------------------------------------------------
 
-**Exercise** : Reproduce figure 7, $m = 100$, $\alpha = 0.05$.
+👉 **Exercise** : Reproduce figure 7, $m = 100$, $\alpha = 0.05$.
 
 ### Holm method
 
@@ -528,52 +529,45 @@ Method less conservative than Bonferonni, the main idea is make the significance
 
 adjusted p-values : $q_{(i)} = \min(1, \max_{j \le i}[(m + 1 - j) * p_{(j)} ])$
 
-Procedure: 
+Procedure:
 
-1. Sort the p-values in ascending order
-2. Compare the smallest p-value to $\alpha / m$
-  1. If the associated $H_0$ is not rejected **stop**, otherwise **continue**
-3. Compare the second smallest p-value to $\alpha / m-1$
-  1. If the associated $H_0$ is not rejected **stop**, otherwise **continue**
-4. Keep going till compare the largent p-value to $\alpha$
+1.  Sort the p-values in ascending order
+2.  Compare the smallest p-value to $\alpha / m$
+3.  If the associated $H_0$ is not rejected **stop**, otherwise **continue**
+4.  Compare the second smallest p-value to $\alpha / m-1$
+5.  If the associated $H_0$ is not rejected **stop**, otherwise **continue**
+6.  Keep going till compare the largent p-value to $\alpha$
 
 ## False Discovery Rate (FDR)
 
 FDR is the expected number of significant results which are false positive on average.
 
-**$FDR = E(V/R)$** with **$V$** number of false positives (type-I error) ; **$R$** number of rejections
-**$V/R$** is called false discovery proportion (FDP)
+$FDR = E(V/R)$ with $V$ number of false positives (type-I error) ; $R$ number of rejections $V/R$ is called false discovery proportion (FDP)
 
-We use the FDR when **$m$** is very large and the FWER is too conservative in this case.
+We use the FDR when $m$ is very large and the FWER is too conservative in this case.
 
 We also need to control the FDR because the FDP increase if there is **a lot of true negatives** in comparison to **true positives**
 
-Example with a test with **$\alpha = 0.05$** and **$\beta$ = 1**:
-I test 25 variables, 5 of which are true positives
-So we have 5 true positives and $20*0.05$ **(1)** false positive
-$FDP = 1/(5+1)$ **$= 16.67\%$**
+Example with a test with $\alpha = 0.05$ and $\beta$ = 1: I test 25 variables, 5 of which are true positives So we have 5 true positives and $20*0.05$ **(1)** false positive $FDP = 1/(5+1)$ $= 16.67\%$
 
-Same test but with **505 variables** and still 5 true positives
-So we have 5 true positives and $500*0.05$ **(25**) false positives
-$FDP = 25/(5+25)$ **$= 83.33\%$**
+Same test but with **505 variables** and still 5 true positives So we have 5 true positives and $500*0.05$ **(25**) false positives $FDP = 25/(5+25)$ $= 83.33\%$
 
 ### Benjamini-Hochberg method (B-H)
 
-This method control the FDR and the main idea is similar to Holm's correction
-Note that B-H **requires independent assumptions or at least positively correlated** between tests to garantee FDR control
+This method control the FDR and the main idea is similar to Holm's correction Note that B-H **requires independent assumptions or at least positively correlated** between tests to garantee FDR control
 
 adjusted p-values : $q_{(i)} = \min(1, \min_{j \ge i}[(m / j) * p_{(j)} ])$
 
-Procedure with $\alpha$ the desired FDR level: 
+Procedure with $\alpha$ the desired FDR level:
 
-1. Sort the p-values in ascending order
-2. Compare the smallest p-value to $\alpha / m$
-  1. If the associated $H_0$ is not rejected **stop**, otherwise **continue**
-3. Compare the second smallest p-value to $2\alpha / m$
-  1. If the associated $H_0$ is not rejected **stop**, otherwise **continue**
-4. ...
-5. Keep rejecting $H_0$ until the first $p_{(i)} \ge \frac{i*\alpha}{m}$
-6. Do not reject the remaining hypotheses
+1.  Sort the p-values in ascending order
+2.  Compare the smallest p-value to $\alpha / m$
+3.  If the associated $H_0$ is not rejected **stop**, otherwise **continue**
+4.  Compare the second smallest p-value to $2\alpha / m$
+5.  If the associated $H_0$ is not rejected **stop**, otherwise **continue**
+6.  ...
+7.  Keep rejecting $H_0$ until the first $p_{(i)} \ge \frac{i*\alpha}{m}$
+8.  Do not reject the remaining hypotheses
 
 ### Benjamini-Yekutieli method (B-Y)
 
@@ -583,16 +577,16 @@ adjusted p-values : $q_{(i)} = \min(1, \min_{j \ge i}[\frac{m*\sum_{k=1}^{m} \fr
 
 Similar procedure as B-H method except that the number of tests is inflated to account for possible dependencies
 
-1. Sort the p-values in ascending order
-2. Compare the smallest p-value to $\alpha / (m * \sum_{k=1}^{m} \frac{1}{k})$
-3. Compare the second smallest p-value to $2\alpha / (m * \sum_{k=1}^{m} \frac{1}{k})$
-4. ...
-5. Keep rejecting $H_0$ until the first $p_{(i)} \ge \frac{i*\alpha}{(m * \sum_{k=1}^{m} \frac{1}{k})}$
-6. Do not reject the remaining hypotheses
+1.  Sort the p-values in ascending order
+2.  Compare the smallest p-value to $\alpha / (m * \sum_{k=1}^{m} \frac{1}{k})$
+3.  Compare the second smallest p-value to $2\alpha / (m * \sum_{k=1}^{m} \frac{1}{k})$
+4.  ...
+5.  Keep rejecting $H_0$ until the first $p_{(i)} \ge \frac{i*\alpha}{(m * \sum_{k=1}^{m} \frac{1}{k})}$
+6.  Do not reject the remaining hypotheses
 
 ### Methods comparison
 
-```{r comparison-methods, message=FALSE}
+```{r comparison-methods, message=FALSE, cache=TRUE}
 #library("DESeq2")
 #library("airway")
 data("airway")
@@ -607,7 +601,7 @@ awde <- awde[sample(dim(awde)[1], size = 13000),]
 awde <- awde[-which(awde$pvalue < 1e-15),]
 ```
 
-::: {.column-margin}
+::: column-margin
 ```{r comparison-method-raw-histo, echo=FALSE, warning=FALSE, message=FALSE}
 #| fig-width: 3
 #| fig-height: 3
@@ -822,14 +816,13 @@ p_val_threshold_plot <- ggplot() +
 p_val_threshold_plot
 ```
 
----
+------------------------------------------------------------------------
 
 **Exercise**: Using the code at the beginning of the section, try to reproduce figure 9.
 
 # Relationship between power, sample size, effect size, and alpha
 
 **Coming Soon**
-
 
 # Conclusion
 
@@ -840,3 +833,8 @@ p_val_threshold_plot
 -   Multiple testing **must** be take into account and your p-values adjusted
 -   As the proportion of true negatives in the data increases, the **FDR explodes**
 -   Choose the right correction method according to your objectives
+
+
+Additional ressources:
+
+ - @msmb
