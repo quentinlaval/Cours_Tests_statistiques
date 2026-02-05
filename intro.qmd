@@ -1,21 +1,21 @@
-# Théorie générale des tests statistiques
+# General Theory of Statistical Tests
 
-Le test d'hypothèse est un concept fondamental dans le monde scientifique. Un test d'hypothèse a pour but de présenter une règle de décision, établie à l'aide de résultats d'échantillon, permettant de d'effectuer un choix entre deux hypothèses statistiques.
+Hypothesis testing is a fundamental concept in the scientific world. The purpose of hypothesis testing is to present a decision rule, established before using sample results, that allows a choice to be made between two statistical hypotheses.
 
-## Concepts fondamentaux
+## Key concepts
 
-Qu'est-ce qu'une hypothèse statistique ?
-C'est une affirmation a priori sur une ou plusieurs caractéristiques d'une population telles que la valeur de paramètres, la distribution des observations.
+What is a statistical hypothesis?
+It is an *a priori* statement about one or more characteristics of a population, such as the value of parameters or the distribution of observations.
 
-Il existe deux types d'hypothèses :
+There are two types of hypotheses:
 
--   **Hypothèse nulle (H₀)** : hypothèse soumise au test statistique et considérée comme vraie pour le test, H₀ est souvent un modèle simple ou bien une valeur définie d'un paramètre. Exemple, il n'y a pas de différence entre les moyennes de mes deux groupes, $H_0$ : $\mu_1 = \mu_2$ 
+-   **Null hypothesis (H₀)**: The hypothesis submitted to statistical testing and considered true for the test, $H_0$, is often a simple model or a defined value of a parameter. For example, there is no difference between the means of two groups. $H_0$ : $\mu_1 = \mu_2$ 
   
--   **Hypothèse alternative (H₁)** : hypothèse différente de $H_0$, communément son opposé. Exemple $H_1$ : $\mu_1 ≠ \mu_2$
+-   **Alternative hypothesis (H₁)**: hypothesis different from $H_0$, commonly its opposite. Example $H_1$: $\mu_1 ≠ \mu_2$
 
-Les erreurs de Type I et de Type II, qu'est-ce ?
+What is type-I and type-II errors ?
 
--   **α l'erreur de Type I (ou risque de première espèce)** : c'est la probabilité de rejeter H₀ alors que H₀ est vraie. Dit autrement, c'est le risque de conclure à tort, via les résultats obtenus, sur une différence réelle alors qu'elle est due au hasard. Exemple : un joueur joue à la roulette, il lance la roue 6 fois, il voit sortir 4 numéros rouges et 2 numéros noirs. Il en conclu qu'il y a deux fois plus de numéros rouges que de noirs.
+-   **α Type I error (false positive)**: It is the probability to reject $H_0$ when $H_0$ is **true**. In other words, it's the risk of incorrectly concluding, based on the results obtained, that there is a real difference when in fact it is due to chance. Example: a player plays roulette, spins the wheel 6 times, and sees 4 red numbers and 2 black numbers come up. He concludes that there are twice as many red numbers as black numbers.
 
 ::: {.column-margin}
 ```{r echo=FALSE}
@@ -26,10 +26,10 @@ knitr::include_graphics("Images/roulette.png")
 ```
 :::
 
--   **β l'erreur de Type II (ou risque de deuxième espèce)** : c'est la probabilité de **ne pas** rejeter H₀ alors que $H_0$ est fausse. En autres, c'est le risque de conclure à tort qu'il n'y a pas de différence alors qu'il y a une différence réelle.
+-   **β Type II error (false negative)**: It's the probability of **not** rejecting $H_0$ when $H_0$ is false. In other words, it is the risk of wrongly concluding that there is no difference when there is actually a difference.
 
 
-La puissance d'un test statistique, c'est la probabilité de rejeter H₀ lorsque $H_0$ est fausse. Elle se calcul ainsi : $puissance = 1 - \beta$
+Statistical power, it is the probability to reject $H_0$ when $H_0$ is false. $Power = 1 - \beta$
 
 Table: Table 1: Hypothesis testing, types of error
 
@@ -47,6 +47,7 @@ library(gganimate)
 library(DESeq2)
 library(airway)
 library(purrr)
+library(tibble)
 set.seed(42)
 ```
 
@@ -88,9 +89,14 @@ c = \sqrt{\frac{n_1 n_2}{n_1 + n_2}}
 $$
 
 
-### Test de Student à deux échantillons indépendants
+### Student two-sample test
 
-Compare les moyennes de deux groupes indépendants : trt2 (n=10) et crtl (n=10).
+Compare the means of two independent groups: trt2 ($n=10$) et crtl ($n=10$).
+
+**Assumptions**:
+
+The distributions of the two groups must be Normally distributed.
+
 
 ```{r, echo=FALSE}
 data("PlantGrowth")
@@ -101,7 +107,7 @@ exemple_data <- PlantGrowth %>% filter(group != "trt1")
 ```{r test-t-two-samples, echo=FALSE, warning=FALSE, message=FALSE}
 #| fig-width: 3
 #| fig-height: 3
-#| fig-cap: "Figure 2: Exemple de données de deux groupes"
+#| fig-cap: "Figure 2: Data example of two groups."
 ggplot(exemple_data, aes(y = weight, x = group, col = group)) +
   geom_point() + 
   theme(legend.position = "none")
@@ -117,10 +123,10 @@ tt <- with(exemple_data,
 tt
 ```
 
-On observe une différence entre mes deux groupes de faible échantillon, que ce passerait-il si on augmente artificiellement la taille d'échantillon en dupliquant les données ? Je conserve le même groupe
+There is a difference between my two small sample groups. What would happen if we artificially increased the sample size by duplicating the data? I am keeping the same groups.
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
-#| fig-cap: "Figure 3: Graphique montrant l'évolution de la p-valeur (échelle log) en fonction de la taille d'échantillon par groupe."
+#| fig-cap: "Figure 3: Graph showing the evolution of the p-value (log scale) as a function of sample size per group."
 
 compute_pvalue <- function(data, k) {
 
@@ -165,9 +171,9 @@ p <- ggplot(
   ) +
   scale_y_log10() +
   labs(
-    x = "Taille d'échantillon par groupe",
+    x = "Sample size per group",
     y = "p-value",
-    title = "Impact de la taille d'échantillon sur la p-value"
+    title = "Impact of sample size per group on the p-value"
   ) +
   theme_minimal()
 
@@ -193,14 +199,95 @@ tt_10 <- with(
 )
 tt_10
 ```
-Dans cet exemple j'ai dupliqué dix fois le jeu de données, on peut voir que les moyennes sont **identiques** mais que la pvalue associée est bien **plus basse** :
+In this example, I duplicated the dataset 10 times. We can see that the means are **identical**, but the associated p-value is much **lower**:
 
--   La puissance statistique associée au test de Student est dépendante de la taille d'échantillon. Plus le nombre d'observations est élevé, plus les résultats seront significatifs.
+-   The statistical power associated with Student's t-test depends on the sample size. The greater the number of observations, the more significant the results will be.
 
 ---
 
-**Exercice** : Reproduire la figure 3 à l'aide de données simulées issues d'une distribution normale :
-groupe 1 $\mathcal{N}(10,\,1)$ ; groupe 2 $\mathcal{N}(10.5,\,1)$. Pour chaque groupe une taille d'échantillon initiale de 20.
+**Exercise** : Reproduce figure 3 using simulated data from a normal distribution: 
+group 1 $\mathcal{N}(10,\,1)$ ; group 2 $\mathcal{N}(10.5,\,1)$. For each groups, the initial sample size is 20.
+
+## Wilcoxon test
+
+### Wilcoxon two-sample test
+
+The Wilcoxon two-sample test is a nonparametric test because no particular
+assumption is made to the distribution of the data, and it can be perform in very small sample size. The main idea of this test is to ranks all of the data and calculates the sum of the ranks for one of the groups. The null hypothesis $H_0$ is that the **two groups have identical distribution**.
+
+⚠️
+
+**One not correct thing** about this test is it can be describe as a test for the median. This test can be use as a median test **only** if the distribution in the two groups is known to have the **same shape**.
+
+⚠️
+
+**Test Statistic**
+We will use $SR$, the sum of the ranks of the group with the smallest sample size. $n_{\min}$ is the minimum between group1 and group2 (and $n_{\max}$ is the maximum between group1 and group2).
+
+-   **When $n_{\min} < 10$:**
+
+$C = SR - \frac{n_{\min}(n_{\min} + 1)}{2} \sim_{H_0} \text{centered Wilcoxon}(n_{\min}, n_{\max})$
+
+---
+
+-   **When $n_{\min} > 10$:** 
+
+$SR$ is approximately Normally distributed:
+
+$SR \sim_{H_0} \mathcal{N}\!\left(\frac{n_{\min}(n_{\min} + n_{\max} + 1)}{2} \; ; \; \sqrt{\frac{n_{\max}}{6}\left(\frac{n_{\min}(n_{\min} + n_{\max} + 1)}{2}\right)}\right)$
+
+The test statistic **$U$** is:
+
+$U = \frac{SR - \frac{n_{\min}(n_{\min} + 1)}{2}}{\sqrt{\frac{n_{\max}}{6}\left(\frac{n_{\min}(n_{\min} + n_{\max} + 1)}{2}\right)}} \sim_{H_0} N(0, 1)$
+
+---
+
+```{r plot-wilcoxon, echo=FALSE, warning=FALSE, message=FALSE}
+#| fig-cap: "Figure X: Plot of two distributions with identical median."
+set.seed(9876)
+n <- 1000
+# Groupe A : distribution normale
+groupe_A <- rnorm(n, mean = 0, sd = 1)
+
+# Groupe B : distribution asymétrique
+groupe_B_raw <- rlnorm(n, meanlog = 0, sdlog = 0.6)
+
+# Recentrage pour égaliser les médianes
+groupe_B <- groupe_B_raw - median(groupe_B_raw) + median(groupe_A)
+
+
+data <- tibble(
+  valeur = c(groupe_A, groupe_B),
+  groupe = factor(rep(c("A", "B"), each = n))
+)
+
+mediane_commune <- median(data$valeur)
+res_test <- wilcox.test(groupe_A, groupe_B)
+
+# Plot
+ggplot(data, aes(x = valeur, fill = groupe, color = groupe)) +
+  geom_density(alpha = 0.4) +
+  geom_vline(
+    aes(xintercept = mediane_commune, linetype = "Median"),
+    linewidth = 1,
+    color = "black"
+  ) +
+  scale_linetype_manual(
+    name = "",
+    values = c("Median" = "dashed")
+  ) +
+  labs(
+    title = "Different distributions with identical median",
+    subtitle = paste("Wilcoxon p-value =", round(res_test$p.value, 4)),
+    x = "Value",
+    y = "Density",
+    color = "Group",
+    fill  = "Group"
+  ) +
+  theme_minimal()
+
+```
+
 
 ## Test de proportion
 
@@ -233,35 +320,6 @@ ggplot(prop_data, aes(x = groupe, y = proportion, fill = groupe)) +
   labs(title = "Comparaison de proportions",
        subtitle = paste("p-value =", round(resultat_prop2$p.value, 4)),
        y = "Proportion") +
-  theme_minimal() +
-  theme(legend.position = "none")
-```
-
-## Test de Wilcoxon
-
-Test non-paramétrique alternatif au test t (ne suppose pas la normalité).
-
-### Test de Mann-Whitney (Wilcoxon pour deux échantillons indépendants)
-
-```{r mann-whitney}
-groupe_X <- rexp(30, rate = 0.1)
-groupe_Y <- rexp(30, rate = 0.08)
-
-resultat_mw <- wilcox.test(groupe_X, groupe_Y)
-print(resultat_mw)
-
-# Visualisation
-donnees_mw <- data.frame(
-  valeur = c(groupe_X, groupe_Y),
-  groupe = rep(c("Groupe X", "Groupe Y"), each = 30)
-)
-
-ggplot(donnees_mw, aes(x = groupe, y = valeur, fill = groupe)) +
-  geom_violin(alpha = 0.7) +
-  geom_boxplot(width = 0.2, fill = "white") +
-  labs(title = "Test de Mann-Whitney",
-       subtitle = paste("p-value =", round(resultat_mw$p.value, 4)),
-       y = "Valeurs") +
   theme_minimal() +
   theme(legend.position = "none")
 ```
@@ -697,8 +755,6 @@ p_val_threshold_plot
 -   Le test t est paramétrique et suppose la normalité
 -   Le test de Wilcoxon est une alternative non-paramétrique robuste
 -   Les tests de proportion sont utilisés pour les données binaires
--   La correction pour tests multiples est **essentielle** pour éviter les faux positifs
--   **FWER** contrôle la probabilité de toute erreur (strict)
--   **FDR** contrôle la proportion d'erreurs (plus puissant)
--   Bonferroni: simple mais conservateur
--   Benjamini-Hochberg (FDR): équilibre entre puissance et contrôle
+-   Multiple testing **must** be take into account and your p-values adjusted
+-   As the proportion of true negatives in the data increases, the **FDR explodes**
+-   Choose the right correction method according to your objectives
