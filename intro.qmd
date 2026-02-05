@@ -284,7 +284,8 @@ ggplot(data, aes(x = valeur, fill = groupe, color = groupe)) +
 
 ## Fisher's Exact Test
 
-Fisher’s exact test is a non-parametric statistical test used to assess the independence between two binary variables in a $2 \times 2$ contingency table. It is most commonly applied when the assumptions underlying $\chi^2$ test and Yates's $\chi^2$ test are not valid. ️
+
+Fisher’s exact test is a non-parametric statistical test used to assess the independence between two binary variables in a $2 \times 2$ contingency table. It is most commonly applied when the assumptions underlying $\chi^2$ test and Yates's $\chi^2$ test are not valid.
 
 ⚠️ This test assumes that the data are independent of each other, so care must be taken with statistical individuals (e.g., in single-cell data coming from the same patient).
 
