@@ -8,8 +8,11 @@ book:
   date: "15/01/2026"
   chapters:
     - index.qmd
-    - intro.qmd
-    - references.qmd
+    - 1_stat_test.qmd
+    - 2_multiple_testing.qmd
+    - 3_power_and_nsn.qmd
+    - 4_conclusion.qmd
+    - 5_references.qmd
 
 bibliography: references.bib
 

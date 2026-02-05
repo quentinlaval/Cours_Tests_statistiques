@@ -1,0 +1,14 @@
+# Conclusion
+
+-   Defining the hypotheses to be tested is crucial
+-   The t-test is a parametric test comparing means requiring validation conditions and is affected by large sample size
+-   The Wilcoxon test is an interesting nonparametric alternative to the t-test
+-   Fisher's exact test allows two proportions to be compared
+-   Multiple testing **must** be take into account and your p-values adjusted
+-   As the proportion of true negatives in the data increases, the **FDR explodes**
+-   Choose the right correction method according to your objectives
+
+
+Additional ressources:
+
+ - @msmb

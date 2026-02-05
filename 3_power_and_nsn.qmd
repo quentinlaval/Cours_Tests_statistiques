@@ -1,0 +1,3 @@
+# Relationship between power, sample size, effect size, and alpha
+
+**Coming Soon**

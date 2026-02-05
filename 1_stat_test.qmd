@@ -1,0 +1,401 @@
+```{r setup, echo=FALSE, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(gganimate)
+library(DESeq2)
+library(airway)
+library(purrr)
+library(tibble)
+library(emoji)
+library(fontawesome)
+set.seed(2026)
+```
+
+# General Theory of Statistical Tests
+
+Hypothesis testing is a fundamental concept in the scientific world. The purpose of hypothesis testing is to present a decision rule, established before using sample results, that allows a choice to be made between two statistical hypotheses.
+
+## Key concepts
+
+What is a **statistical hypothesis**? It is an *a priori* statement about one or more characteristics of a population, such as the value of parameters or the distribution of observations.
+
+⚠️ *such an hypothesis **cannot** depend on the data upon which it will be tested !* Otherwise, you risk to suffer from optimism boas (a.k.a. over-fitting) via a phenomenon usually refered to as *double-dipping* (see @kriegeskorte2009circular for instance).
+
+In this framework, two hypotheses are opposed:
+
+-   **Null hypothesis (H₀)**: The hypothesis submitted to statistical testing and considered true for the test, $H_0$, is often a simple model or a defined value of a parameter. For example, there is no difference between the means of two groups. $H_0$ : $\mu_1 = \mu_2$
+
+-   **Alternative hypothesis (H₁)**: hypothesis different from $H_0$, commonly its opposite. Example $H_1$: $\mu_1 ≠ \mu_2$
+
+What are type I and type II errors ?
+
+ - **α Type I error (false positive)**: the probability to **reject $H_0$ when $H_0$ is true**. In other words, it's the risk of incorrectly concluding (based on the obtained results) that there is a real difference, *when in fact there is none* (it is only observed because of random sampling fluctuations). 
+
+Example: a player plays roulette, spins the wheel 6 times, and sees 4 red numbers and 2 black numbers come up. He concludes that there are twice as many red numbers as black numbers.
+
+::: column-margin
+```{r echo=FALSE}
+#| fig-width: 1.5
+#| fig-height: 1.5
+#| fig-cap: "Figure 1: example of the roulette game"
+knitr::include_graphics("Images/roulette.png")
+```
+:::
+
+-   **β Type II error (false negative)**: the probability of **not rejecting $H_0$ when $H_0$ is false**. In other words, it is the risk of wrongly concluding that there is no difference, *when there actually is a difference*.
+
+Statistical power, it is the probability to reject $H_0$ when $H_0$ is false:
+$$\textsf{Power} = 1 - \beta$$
+
+| <span style="color:#6f42c1; font-weight:bold;">Decision</span>  \\ <span style="color:#0d6efd; font-weight:bold;">Reality</span> | <span style="color:#0d6efd; font-weight:bold;">$H_0$ true</span> | <span style="color:#0d6efd; font-weight:bold;">$H_0$ false</span> |
+|-------------------|---------------|----------------|
+| <span style="color:#6f42c1; font-weight:bold;">**Do not reject $H_0$**</span> | <span style="background:#e8f5e9; padding:4px 8px; border-radius:4px;">✔ Correct</span> | <span style="background:#fff3cd; padding:4px 8px; border-radius:4px;">Type II error $\beta$</span> |
+| <span style="color:#6f42c1; font-weight:bold;">**Reject $H_0$**</span> | <span style="background:#f8d7da; padding:4px 8px; border-radius:4px;">Type I error $\alpha$</span> | <span style="background:#e8f5e9; padding:4px 8px; border-radius:4px;">✔ Correct</span> |
+
+: Table 1: Hypothesis testing, types of error
+
+
+## Student's *t*-test
+
+The Student's *t*-test compares the means between two groups. The test statistic is defined as
+
+$$
+t = c \, \frac{\bar{m}_1 - \bar{m}_2}{s}
+$$
+
+-   $\bar{m}_1$ and $\bar{m}_2$ are the means observed in each group respectively, [^intro-1]
+-   $c$ is a constant depending on the sample sizes, [^intro-2]
+-   $s$ is the pooled standard deviation. [^intro-3]
+
+[^intro-1]: $\bar{m}_1 = \frac{1}{n_1} \sum_{i=1}^{n_1} x_{1,i} \qquad \bar{m}_2 = \frac{1}{n_2} \sum_{i=1}^{n_2} x_{2,i}$
+
+[^intro-2]: $s_1^2$ and $s_2^2$ are unbiased estimators of the intra-group variance: $$
+    s_1^2 = \frac{1}{n_1 - 1} \sum_{i=1}^{n_1} (x_{1,i} - \bar{m}_1)^2
+    \qquad
+    s_2^2 = \frac{1}{n_2 - 1} \sum_{i=1}^{n_2} (x_{2,i} - \bar{m}_2)^2
+    $, then $s =
+    \sqrt{
+    \frac{(n_1 - 1)s_1^2 + (n_2 - 1)s_2^2}
+     {n_1 + n_2 - 2}
+    }
+    $$
+
+[^intro-3]: $c = \sqrt{\frac{n_1 n_2}{n_1 + n_2}}$
+
+### Student 2-sample *t*-test in `r fontawesome::fa("r-project")`
+
+Compare the means of two independent groups: Treatment ($n=10$) et crtl ($n=10$).
+
+**Assumptions**:
+
+The distributions of the two groups is assumed to be Normal. In practice, this assumption is very easily met, see [@lumley2002importance]
+
+```{r, echo=FALSE}
+data("PlantGrowth")
+exemple_data <- PlantGrowth |> filter(group != "trt1")
+levels(exemple_data$group) <- c("Control", "trt1", "Treatment")
+```
+
+::: column-margin
+```{r test-t-two-samples, echo=FALSE, cache=TRUE}
+#| fig-width: 3
+#| fig-height: 3
+#| fig-cap: "Figure 2: Data example of two groups."
+ggplot(exemple_data, aes(y = weight, x = group, col = group)) +
+  geom_point() + 
+  theme_classic() +
+  theme(legend.position = "none") +
+  MetBrewer::scale_color_met_d("Johnson") +
+  labs(y="Weight", x="Group")
+
+```
+:::
+
+```{r}
+tt <- with(exemple_data,
+          t.test(weight[group =="Control"],
+                 weight[group =="Treatment"],
+                 var.equal = TRUE))
+tt
+```
+
+There is a statistically significant difference between my 2 (small) groups. 
+
+Now, what would happen if we artificially increased the sample size by duplicating the data (I am keeping the same groups here).
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, cache=TRUE}
+#| fig-cap: "Figure 3: Graph showing the evolution of the p-value (log scale) as a function of sample size per group."
+
+compute_pvalue <- function(data, k) {
+
+  data_k <- data %>%
+    dplyr::slice(rep(row_number(), times = k))
+
+  tt <- with(
+    data_k,
+    t.test(
+      weight[group == "Control"],
+      weight[group == "Treatment"],
+      var.equal = TRUE
+    )
+  )
+
+  tibble(
+    duplication = k,
+    n_per_group = 10 * k,
+    p_value = tt$p.value
+  )
+}
+
+results <- purrr::map_dfr(
+  c(1, 2, 5, 10, 20, 30, 40, 50, 70, 100),
+  ~ compute_pvalue(exemple_data, .x)
+)
+
+p <- ggplot(
+  results,
+  aes(x = n_per_group, y = p_value)
+) +
+  geom_point(color = "steelblue", size = 2) +
+  geom_line(color = "steelblue") +
+  geom_hline(aes(yintercept = 0.05, linetype = "pvalue = 0.05", color = "pvalue = 0.05")) +
+    scale_color_manual(
+    name = NULL,
+    values = c("pvalue = 0.05" = "red")
+  ) +
+  scale_linetype_manual(
+    name = NULL,
+    values = c("pvalue = 0.05" = "dashed")
+  ) +
+  scale_y_log10() +
+  labs(
+    x = "Sample size per group",
+    y = "p-value",
+    title = "Impact of sample size per group on the p-value"
+  ) +
+  theme_minimal()
+
+animated_plot <- p +
+transition_reveal(along = n_per_group)+
+  ease_aes("linear")
+
+animated_plot
+```
+
+```{r, echo=FALSE}
+data_k <- exemple_data %>%
+  dplyr::slice(rep(row_number(), times = 10))
+
+tt_10 <- with(
+  data_k,
+  t.test(
+    weight[group == "Control"],
+    weight[group == "Treatment"],
+    var.equal = TRUE
+  )
+)
+tt_10
+```
+
+In this example, I duplicated the dataset 10 times (notice the increased degrees of freedom in the output above). We can see that the means are **identical** as before, but the associated p-value is *much* **lower**:
+
+-   The statistical power associated with Student's t-test **depends on the sample size** ! The greater the number of observations, the more significant the results can be.
+
+------------------------------------------------------------------------
+
+👉 **Exercise** : Reproduce figure 3 using simulated data from a normal distribution: group 1 $\mathcal{N}(10,\,1)$ ; group 2 $\mathcal{N}(10.5,\,1)$. For each groups, the initial sample size is 20.
+
+
+
+## Wilcoxon test
+
+### Wilcoxon two-sample test
+
+The Wilcoxon two-sample test is a nonparametric test because no particular assumption is made to the distribution of the data, and it can be perform in very small sample size. The main idea of this test is to ranks all of the data and calculates the sum of the ranks for one of the groups. The null hypothesis $H_0$ is that the **two groups have identical distribution**.
+
+⚠️ **One falsehood** often said about this test is that it would test median equality: this test can be use as a median test **only** if the distribution in the two groups is known to have the **same shape**.
+
+⚠️ **Test Statistic:** we will use the **sum of the ranks of the group with the smallest sample size, denoted as $SR$. $n_{\min}$ is the minimum between `group1` and `group2` (and $n_{\max}$ is the maximum between group1 and group2).
+
+-   **When** $n_{\min} < 10$:
+
+$C = SR - \frac{n_{\min}(n_{\min} + 1)}{2} \sim_{H_0} \text{centered Wilcoxon}(n_{\min}, n_{\max})$
+
+------------------------------------------------------------------------
+
+-   **When** $n_{\min} > 10$:
+
+$SR$'s distribution can be approximated with the Normal distribution:
+
+$SR \sim_{H_0} \mathcal{N}\!\left(\frac{n_{\min}(n_{\min} + n_{\max} + 1)}{2} \; ; \; \sqrt{\frac{n_{\max}}{6}\left(\frac{n_{\min}(n_{\min} + n_{\max} + 1)}{2}\right)}\right)$
+
+The test statistic used is then:
+
+$U = \frac{SR - \frac{n_{\min}(n_{\min} + 1)}{2}}{\sqrt{\frac{n_{\max}}{6}\left(\frac{n_{\min}(n_{\min} + n_{\max} + 1)}{2}\right)}} \sim_{H_0} N(0, 1)$
+
+------------------------------------------------------------------------
+
+```{r plot-wilcoxon, echo=FALSE, warning=FALSE, message=FALSE}
+#| fig-cap: "Figure 4: Plot of two distributions with identical median."
+set.seed(9876)
+n <- 1000
+# Groupe A : distribution normale
+groupe_A <- rnorm(n, mean = 0, sd = 1)
+
+# Groupe B : distribution asymétrique
+groupe_B_raw <- rlnorm(n, meanlog = 0, sdlog = 0.6)
+
+# Recentrage pour égaliser les médianes
+groupe_B <- groupe_B_raw - median(groupe_B_raw) + median(groupe_A)
+
+
+data <- tibble(
+  valeur = c(groupe_A, groupe_B),
+  groupe = factor(rep(c("A", "B"), each = n))
+)
+
+mediane_commune <- median(data$valeur)
+res_test <- wilcox.test(groupe_A, groupe_B)
+
+# Plot
+ggplot(data, aes(x = valeur, fill = groupe, color = groupe)) +
+  geom_density(alpha = 0.4) +
+  geom_vline(
+    aes(xintercept = mediane_commune, linetype = "Median"),
+    linewidth = 1,
+    color = "black"
+  ) +
+  scale_linetype_manual(
+    name = "",
+    values = c("Median" = "dashed")
+  ) +
+  labs(
+    title = "Different distributions with identical median",
+    subtitle = paste("Wilcoxon p-value =", round(res_test$p.value, 4)),
+    x = "Value",
+    y = "Density",
+    color = "Group",
+    fill  = "Group"
+  ) +
+  theme_minimal()
+
+```
+
+## Fisher's Exact Test
+
+
+Fisher’s exact test is a non-parametric statistical test used to assess the independence between two binary variables in a $2 \times 2$ contingency table. It is most commonly applied when the assumptions underlying $\chi^2$ test and Yates's $\chi^2$ test are not valid.
+
+⚠️ This test assumes that the data are independent of each other, so care must be taken with statistical individuals (e.g., in single-cell data coming from the same patient).
+
+
+|                   | **Smoke** | **Don't smoke** | *Total* |
+|-------------------|-----------|-----------------|---------|
+| **$ \< 40 yo$**   | $a$       | $b$             | $n1$    |
+| **$ \>40 yo$**    | $c$       | $d$             | $n2$    |
+| *Total*           | $m1$      | $m2$            | $N$     |
+
+: Table 3: Contingency table
+
+$H_0$: The two variables are independent
+
+$p_{abcd}$ is the probability that $Y=a$ with n1, m1 and N known, fixed.
+
+$p_{abcd} = \mathbb{P}\!\left( Y = a \mid n1,\; m1,\; N \right)$
+
+$Y \sim Hypergeometric(m1, N-m1, N)$
+
+So $p_{abcd} = \dfrac{(a + b)! * (c + d)! *(a + c)! *(b + d)!}{a!* \, b!* \, c!* \, d!* \, n!}$
+
+To help to understand this probability, we will use numerical examples.
+
+```{r test-proportion}
+
+tab <- matrix(
+  c(5, 8,   
+    3, 15),  
+  nrow = 2,
+  byrow = TRUE
+)
+
+colnames(tab) <- c("Smoke", "Dont_Smoke")
+rownames(tab) <- c("less_than_49", "more_than_49")
+
+print(tab)
+
+fisher.test(tab)
+
+```
+
+```{r test-proportion_calcul_pval}
+
+## Manual computation of Fisher's exact test p-value
+
+# Parameters fixed by the margins of the contingency table
+# N  : total number of observations
+# m1 : total number of Smokers
+# n1 : total number of observations in less than 40yo
+
+N  <- sum(tab)  
+m1 <- sum(tab[, 1]) 
+n1 <- sum(tab[1, ])   
+
+## 1. Possible values of the random variable A
+
+# A = number of smokers in Group < 40yo
+# Under H0 (independence) and conditional on the margins,
+# A follows a hypergeometric distribution.
+#
+# The admissible values of A are constrained by the margins:
+#   0 <= A <= min(n1, m1)
+# Here: 0 <= A <= 8
+
+a_vals <- 0:m1
+
+
+## 2. Hypergeometric probabilities
+
+# For each possible value of A, compute the probability with dhyper():
+probs <- dhyper(a_vals, m1, N - m1, n1)
+
+## 3. Reconstruct all compatible 2x2 tables
+# Each value of A uniquely determines a 2x2 table with the same margins:
+# This allows us to explicitly list all possible tables considered
+# in Fisher's exact test
+
+fisher_table <- data.frame(
+  a = a_vals,
+  b = n1 - a_vals,
+  c = m1 - a_vals,
+  d = N - n1 - (m1 - a_vals),
+  Probability = probs
+)
+print(fisher_table)
+
+## 4. Probability of the observed table
+# In the observed data:
+# a_obs = 5 
+a_obs <- tab[1, 1]
+
+p_obs <- dhyper(a_obs, m1, N - m1, n1)
+
+## 5. Identify "as or more extreme" tables
+# For the two-sided Fisher test,
+# a table is considered at least as extreme as the observed one
+# if its hypergeometric probability is less than or equal to
+# the probability of the observed table.
+fisher_table$Extreme <- fisher_table$Probability <= p_obs
+
+## 6. Computation of the p-value
+# The p-value is obtained by summing the probabilities
+# of all tables classified as "extreme".
+p_value_manual <- sum(fisher_table$Probability[fisher_table$Extreme])
+
+test.pval <- fisher.test(tab)$p.value
+print(paste0("Manual pvalue = ", p_value_manual,
+             "Test pvalue = ", test.pval))
+
+```
+
+
