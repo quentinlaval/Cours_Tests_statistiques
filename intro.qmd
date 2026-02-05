@@ -53,21 +53,21 @@ set.seed(42)
 
 ## Student's test (ou t test)
 
-Le test de Student permet une comparaison simple mais importante, celle des moyennes entre deux groupes. La statistique de test est définie ainsi
+The Student's t-test allows for a simple but important comparison: that of the means between two groups. The test statistic is defined as
 
 $$
 t = c \, \frac{\bar{m}_1 - \bar{m}_2}{s}
 $$
 
-Où $\bar{m}_1$ et $\bar{m}_2$ sont les moyennes respectives des deux groupes,
-$c$ est une constante dépendante de la taille d'échantillon, $s^{2}$ est l'estimateur sans biais de la variance globale.
+With $\bar{m}_1$ and $\bar{m}_2$ are the means of the values in the two groups,
+$c$ is a constant depending on the sample sizes, $s$ is pooled standard deviation.
 $$
 \bar{m}_1 = \frac{1}{n_1} \sum_{i=1}^{n_1} x_{1,i}
 \qquad
 \bar{m}_2 = \frac{1}{n_2} \sum_{i=1}^{n_2} x_{2,i}
 $$
 
-$s_1^2$ et $s_2^2$ sont les estimateurs sans biais de la variance intra-groupe.
+$s_1^2$ and $s_2^2$ are unbiased estimators of the intra-group variance.
 
 $$
 s_1^2 = \frac{1}{n_1 - 1} \sum_{i=1}^{n_1} (x_{1,i} - \bar{m}_1)^2
@@ -243,7 +243,7 @@ $U = \frac{SR - \frac{n_{\min}(n_{\min} + 1)}{2}}{\sqrt{\frac{n_{\max}}{6}\left(
 ---
 
 ```{r plot-wilcoxon, echo=FALSE, warning=FALSE, message=FALSE}
-#| fig-cap: "Figure X: Plot of two distributions with identical median."
+#| fig-cap: "Figure 4: Plot of two distributions with identical median."
 set.seed(9876)
 n <- 1000
 # Groupe A : distribution normale
@@ -289,40 +289,124 @@ ggplot(data, aes(x = valeur, fill = groupe, color = groupe)) +
 ```
 
 
-## Test de proportion
+## Fisher's Exact Test
 
-Teste si une proportion observée diffère d'une proportion théorique.
+Fisher’s exact test is a non-parametric statistical test used to assess the independence between two binary variables in a $2×2$ contingency table. It is most commonly applied when the assumptions underlying $\chi^2$ test and Yates's $\chi^2$ test are not valid.
+️
+⚠️
 
+This test assumes that the data are independent of each other, so care must be taken with statistical individuals (e.g., in single-cell data coming from the same patient).
+
+⚠️
+
+Table: Table 3: Contingency table
+
+ |  | **Smoke** | **Don't smoke** | *Total* |
+ |-----------------------|-------------------|-------------------|-------------------|
+ | **$ < 40 yo$** | $a$ | $b$ | $n1$ |
+ | **$ >40 yo$** | $c$ | $d$ | $n2$ |
+ | *Total* | $m1$| $m2$ | $N$ |
+ 
+ $H_0$: The two variables are independent
+ 
+ $p_{abcd}$ is the probability that $Y=a$ with n1, m1 and N known, fixed. 
+ 
+ $p_{abcd} = \mathbb{P}\!\left( Y = a \mid n1,\; m1,\; N \right)$
+ 
+ $Y \sim Hypergeometric(m1, N-m1, N)$
+ 
+ So $p_{abcd} = \dfrac{(a + b)! * (c + d)! *(a + c)! *(b + d)!}{a!* \, b!* \, c!* \, d!* \, n!}$
+
+To help to understand this probability, we will use numerical examples.
+ 
 ```{r test-proportion}
-# Exemple: 55 succès sur 100 essais
-# H₀: p = 0.5 vs H₁: p ≠ 0.5
-resultat_prop <- prop.test(x = 55, n = 100, p = 0.5)
-print(resultat_prop)
 
-# Test de comparaison de deux proportions
-# Groupe 1: 45/100, Groupe 2: 60/100
-resultat_prop2 <- prop.test(x = c(45, 60), n = c(100, 100))
-print(resultat_prop2)
-
-# Visualisation
-prop_data <- data.frame(
-  groupe = c("Groupe 1", "Groupe 2"),
-  proportion = c(45/100, 60/100),
-  n = c(100, 100)
+tab <- matrix(
+  c(5, 8,   
+    3, 15),  
+  nrow = 2,
+  byrow = TRUE
 )
 
-ggplot(prop_data, aes(x = groupe, y = proportion, fill = groupe)) +
-  geom_bar(stat = "identity", alpha = 0.7) +
-  geom_hline(yintercept = 0.5, linetype = "dashed", color = "red") +
-  geom_errorbar(aes(ymin = proportion - 1.96*sqrt(proportion*(1-proportion)/n),
-                    ymax = proportion + 1.96*sqrt(proportion*(1-proportion)/n)),
-                width = 0.2) +
-  labs(title = "Comparaison de proportions",
-       subtitle = paste("p-value =", round(resultat_prop2$p.value, 4)),
-       y = "Proportion") +
-  theme_minimal() +
-  theme(legend.position = "none")
+colnames(tab) <- c("Smoke", "Dont_Smoke")
+rownames(tab) <- c("less_than_49", "more_than_49")
+
+print(tab)
+
+fisher.test(tab)
+
 ```
+
+```{r test-proportion_calcul_pval}
+
+## Manual computation of Fisher's exact test p-value
+
+# Parameters fixed by the margins of the contingency table
+# N  : total number of observations
+# m1 : total number of Smokers
+# n1 : total number of observations in less than 40yo
+
+N  <- sum(tab)  
+m1 <- sum(tab[, 1]) 
+n1 <- sum(tab[1, ])   
+
+## 1. Possible values of the random variable A
+
+# A = number of smokers in Group < 40yo
+# Under H0 (independence) and conditional on the margins,
+# A follows a hypergeometric distribution.
+#
+# The admissible values of A are constrained by the margins:
+#   0 <= A <= min(n1, m1)
+# Here: 0 <= A <= 8
+
+a_vals <- 0:m1
+
+
+## 2. Hypergeometric probabilities
+
+# For each possible value of A, compute the probability with dhyper():
+probs <- dhyper(a_vals, m1, N - m1, n1)
+
+## 3. Reconstruct all compatible 2x2 tables
+# Each value of A uniquely determines a 2x2 table with the same margins:
+# This allows us to explicitly list all possible tables considered
+# in Fisher's exact test
+
+fisher_table <- data.frame(
+  a = a_vals,
+  b = n1 - a_vals,
+  c = m1 - a_vals,
+  d = N - n1 - (m1 - a_vals),
+  Probability = probs
+)
+print(fisher_table)
+
+## 4. Probability of the observed table
+# In the observed data:
+# a_obs = 5 
+a_obs <- tab[1, 1]
+
+p_obs <- dhyper(a_obs, m1, N - m1, n1)
+
+## 5. Identify "as or more extreme" tables
+# For the two-sided Fisher test,
+# a table is considered at least as extreme as the observed one
+# if its hypergeometric probability is less than or equal to
+# the probability of the observed table.
+fisher_table$Extreme <- fisher_table$Probability <= p_obs
+
+## 6. Computation of the p-value
+# The p-value is obtained by summing the probabilities
+# of all tables classified as "extreme".
+p_value_manual <- sum(fisher_table$Probability[fisher_table$Extreme])
+
+test.pval <- fisher.test(tab)$p.value
+print(paste0("Manual pvalue = ", p_value_manual,
+             "Test pvalue = ", test.pval))
+
+```
+
 
 # Multiple testing
 
@@ -333,7 +417,7 @@ Two important concepts with p-values:
 
 -   P-hARKing : Modify or establish new assumptions after seeing results.
 
-In this section, we will focus on multiple testing to avoid one aspect of p-hacking. When multiple tests are performed simultaneously, the risk of type I error (false positive) increases, here is an illustrative example.
+In this section, we will focus on multiple testing to avoid one aspect of p-hacking. When multiple tests are performed simultaneously, the Family-Wise Error Rate increases, here is an illustrative example.
 
 You are playing Russian roulette with a **Smith & Wesson** revolver, an 8-rounds revolver. Before each game, you spin the chamber and play: 
 
@@ -346,13 +430,13 @@ You are playing Russian roulette with a **Smith & Wesson** revolver, an 8-rounds
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
 #| fig-width: 1.5
 #| fig-height: 1.5
-#| fig-cap: "Figure 4: Revolver Smith & Wesson ©Armurerie Lavaux"
+#| fig-cap: "Figure 5: Revolver Smith & Wesson ©Armurerie Lavaux"
 knitr::include_graphics("Images/revolver.jpg")
 ```
 :::
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
-#| fig-cap: "Figure 5: Probability to die in Russian roulette (with a Smith & Wesson) relative to the number of attempts"
+#| fig-cap: "Figure 6: Probability to die in Russian roulette (with a Smith & Wesson) relative to the number of attempts"
 # Nombre de parties
 n <- 1:40
 
@@ -406,7 +490,7 @@ Stricly control FWER. How it works ? Divide **$\alpha$** by number of test **$m$
 **reject hypothesis if *p-value* $< \alpha / m$**
 
 ```{r bonferroni, echo=FALSE, warning=FALSE, message=FALSE}
-#| fig-cap: "Figure 6: FWER versus number of tests."
+#| fig-cap: "Figure 7: FWER versus number of tests."
 # Nombre de test
 n <- 1:100
 alpha <- 0.05
@@ -436,7 +520,7 @@ ggplot(df, aes(x = test, y = value, colour = Adjustement)) +
 
 ---
 
-**Exercise** : Reproduce figure 6, $m = 100$, $\alpha = 0.05$.
+**Exercise** : Reproduce figure 7, $m = 100$, $\alpha = 0.05$.
 
 ### Holm method
 
@@ -527,7 +611,7 @@ awde <- awde[-which(awde$pvalue < 1e-15),]
 ```{r comparison-method-raw-histo, echo=FALSE, warning=FALSE, message=FALSE}
 #| fig-width: 3
 #| fig-height: 3
-#| fig-cap: "Figure 7 : Histogramm of the raw p-values of airway's subset data"
+#| fig-cap: "Figure 8 : Histogramm of the raw p-values of airway's subset data"
 
 ggplot(awde,
   aes(x = pvalue)) +
@@ -556,7 +640,7 @@ rm(awde, airway, aw)
 ```
 
 ```{r adj-pval-plot, echo=FALSE, message=FALSE, warning=FALSE}
-#| fig-cap: "Figure 8: Plot to visualize p-values against rank, colored by methods"
+#| fig-cap: "Figure 9: Plot to visualize p-values against rank, colored by methods"
 df_adjusted <- p_val_df %>%
   pivot_longer(
     cols = c(
@@ -604,7 +688,7 @@ df_adjusted %>%  ggplot(aes(
 ```
 
 ```{r unadjusted-pval-vs-thresholds, echo=FALSE, message=FALSE, warning=FALSE}
-#| fig-cap: "Figure 9: Plot to visualize p-values against rank, colored by method's decision"
+#| fig-cap: "Figure 10: Plot to visualize p-values against rank, colored by method's decision"
 df_plot <- p_val_df %>%
   mutate(
     N = n(),
@@ -740,21 +824,19 @@ p_val_threshold_plot
 
 ---
 
-**Exercise**: Using the code at the beginning of the section, try to reproduce figure 8.
+**Exercise**: Using the code at the beginning of the section, try to reproduce figure 9.
 
-# Relation entre puissance, taille d'échantillon, taille d'effet et alpha
+# Relationship between power, sample size, effect size, and alpha
 
-```{r}
-
-```
+**Coming Soon**
 
 
 # Conclusion
 
--   Les tests d'hypothèses permettent de prendre des décisions statistiques
--   Le test t est paramétrique et suppose la normalité
--   Le test de Wilcoxon est une alternative non-paramétrique robuste
--   Les tests de proportion sont utilisés pour les données binaires
+-   Defining the hypotheses to be tested is crucial
+-   The t-test is a parametric test comparing means requiring validation conditions and is affected by large sample size
+-   The Wilcoxon test is an interesting nonparametric alternative to the t-test
+-   Fisher's exact test allows two proportions to be compared
 -   Multiple testing **must** be take into account and your p-values adjusted
 -   As the proportion of true negatives in the data increases, the **FDR explodes**
 -   Choose the right correction method according to your objectives
