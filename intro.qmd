@@ -9,9 +9,9 @@ C'est une affirmation a priori sur une ou plusieurs caractéristiques d'une popu
 
 Il existe deux types d'hypothèses :
 
--   **Hypothèse nulle (H₀)** : hypothèse soumise au test statistique et considérée comme vraie pour le test, H₀ est souvent un modèle simple ou bien une valeur définie d'un paramètre. Exemple, il n'y a pas de différence entre les moyennes de mes deux groupes, H₀ : µ₁ = µ2 
+-   **Hypothèse nulle (H₀)** : hypothèse soumise au test statistique et considérée comme vraie pour le test, H₀ est souvent un modèle simple ou bien une valeur définie d'un paramètre. Exemple, il n'y a pas de différence entre les moyennes de mes deux groupes, $H_0$ : $\mu_1 = \mu_2$ 
   
--   **Hypothèse alternative (H₁)** : hypothèse différente de H₀, communément son opposé. Exemple H₁ : µ₁ ≠ µ2
+-   **Hypothèse alternative (H₁)** : hypothèse différente de $H_0$, communément son opposé. Exemple $H_1$ : $\mu_1 ≠ \mu_2$
 
 Les erreurs de Type I et de Type II, qu'est-ce ?
 
@@ -21,25 +21,36 @@ Les erreurs de Type I et de Type II, qu'est-ce ?
 ```{r echo=FALSE}
 #| fig-width: 1.5
 #| fig-height: 1.5
-#| fig-cap: "Exemple : Jeu de la Roulette"
+#| fig-cap: "Figure 1: example of the roulette game"
 knitr::include_graphics("Images/roulette.png")
 ```
 :::
 
--   **β l'erreur de Type II (ou risque de deuxième espèce)** : c'est la probabilité de **ne pas** rejeter H₀ alors que H₀ est fausse. En autres, c'est le risque de conclure à tort qu'il n'y a pas de différence alors qu'il y a une différence réelle.
+-   **β l'erreur de Type II (ou risque de deuxième espèce)** : c'est la probabilité de **ne pas** rejeter H₀ alors que $H_0$ est fausse. En autres, c'est le risque de conclure à tort qu'il n'y a pas de différence alors qu'il y a une différence réelle.
 
 
-La puissance d'un test statistique, c'est la probabilité de rejeter H₀ lorsque H₀ est fausse. Elle se calcul ainsi : puissance = 1 - β
+La puissance d'un test statistique, c'est la probabilité de rejeter H₀ lorsque $H_0$ est fausse. Elle se calcul ainsi : $puissance = 1 - \beta$
 
-![](Images/ErrorTypes.png)
+Table: Table 1: Hypothesis testing, types of error
+
+ | Your decision/Reality | **$H_0$ is true** | **$H_0$ is false**|
+ |-----------------------|-------------------|-------------------|
+ | **Do not reject $H_0$** (test non-significant) | **Correct** decision | Wrong decision |
+ | **Reject $H_0$**  (test significant)           | Wrong decision       | **Correct decision** |
+
+
 ```{r setup, echo=FALSE, message=FALSE, warning=FALSE}
 library(tidyverse)
 library(ggplot2)
 library(dplyr)
+library(gganimate)
+library(DESeq2)
+library(airway)
+library(purrr)
 set.seed(42)
 ```
 
-## Test de Student (ou t test)
+## Student's test (ou t test)
 
 Le test de Student permet une comparaison simple mais importante, celle des moyennes entre deux groupes. La statistique de test est définie ainsi
 
@@ -77,22 +88,6 @@ c = \sqrt{\frac{n_1 n_2}{n_1 + n_2}}
 $$
 
 
-
-::: {.column-margin}
-```{r,echo=FALSE,message=FALSE, warning=FALSE}
-# ggplot(data.frame(x = echantillon), aes(x = x)) +
-#   geom_histogram(bins = 10, fill = "steelblue", alpha = 0.7) +
-#   geom_vline(xintercept = 100, color = "red", linetype = "dashed", size = 1) +
-#   geom_vline(xintercept = mean(echantillon), color = "green", size = 1) +
-#   labs(
-#     title = "Test t à un échantillon",
-#     subtitle = paste("p-value =", round(resultat$p.value, 4)),
-#     x = "Valeurs", y = "Fréquence"
-#   ) +
-#   theme_minimal()
-```
-:::
-
 ### Test de Student à deux échantillons indépendants
 
 Compare les moyennes de deux groupes indépendants : trt2 (n=10) et crtl (n=10).
@@ -106,7 +101,7 @@ exemple_data <- PlantGrowth %>% filter(group != "trt1")
 ```{r test-t-two-samples, echo=FALSE, warning=FALSE, message=FALSE}
 #| fig-width: 3
 #| fig-height: 3
-#| fig-cap: "Exemple de données de deux groupes"
+#| fig-cap: "Figure 2: Exemple de données de deux groupes"
 ggplot(exemple_data, aes(y = weight, x = group, col = group)) +
   geom_point() + 
   theme(legend.position = "none")
@@ -125,12 +120,12 @@ tt
 On observe une différence entre mes deux groupes de faible échantillon, que ce passerait-il si on augmente artificiellement la taille d'échantillon en dupliquant les données ? Je conserve le même groupe
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
-library(purrr)
-library(gganimate)
+#| fig-cap: "Figure 3: Graphique montrant l'évolution de la p-valeur (échelle log) en fonction de la taille d'échantillon par groupe."
+
 compute_pvalue <- function(data, k) {
 
   data_k <- data %>%
-    slice(rep(row_number(), times = k))
+    dplyr::slice(rep(row_number(), times = k))
 
   tt <- with(
     data_k,
@@ -148,7 +143,7 @@ compute_pvalue <- function(data, k) {
   )
 }
 
-results <- map_dfr(
+results <- purrr::map_dfr(
   c(1, 2, 5, 10, 20, 30, 40, 50, 70, 100),
   ~ compute_pvalue(exemple_data, .x)
 )
@@ -183,9 +178,10 @@ transition_reveal(along = n_per_group)+
 animated_plot
 
 ```
-```{r}
+
+```{r, echo=FALSE}
 data_k <- exemple_data %>%
-  slice(rep(row_number(), times = 10))
+  dplyr::slice(rep(row_number(), times = 10))
 
 tt_10 <- with(
   data_k,
@@ -201,6 +197,10 @@ Dans cet exemple j'ai dupliqué dix fois le jeu de données, on peut voir que le
 
 -   La puissance statistique associée au test de Student est dépendante de la taille d'échantillon. Plus le nombre d'observations est élevé, plus les résultats seront significatifs.
 
+---
+
+**Exercice** : Reproduire la figure 3 à l'aide de données simulées issues d'une distribution normale :
+groupe 1 $\mathcal{N}(10,\,1)$ ; groupe 2 $\mathcal{N}(10.5,\,1)$. Pour chaque groupe une taille d'échantillon initiale de 20.
 
 ## Test de proportion
 
@@ -266,206 +266,423 @@ ggplot(donnees_mw, aes(x = groupe, y = valeur, fill = groupe)) +
   theme(legend.position = "none")
 ```
 
-# Multiplicité des tests
+# Multiple testing
 
-Lorsqu'on effectue plusieurs tests simultanément, le risque d'erreur de type I (faux positif) augmente.
+## P-hACKing, P-hARKing
 
-```{r multiple-testing-problem}
-# Simulation du problème
-n_tests <- 20
-p_values <- replicate(1000, {
-  sapply(1:n_tests, function(i) {
-    x <- rnorm(30)
-    y <- rnorm(30)
-    t.test(x, y)$p.value
-  })
-})
+Two important concepts with p-values:
+-   P-hacking : Manipulation of statistical analysis until an artificially low p-value below the defined $\alpha$ threshold is obtained. Example: round the p-value ; lot of hypotheses testing without adjustment ; choose a data transformation to obtain a low p-value.
 
-# Proportion de fois où au moins un test est significatif (α = 0.05)
-prop_au_moins_un <- mean(apply(p_values < 0.05, 2, any))
+-   P-hARKing : Modify or establish new assumptions after seeing results.
 
-cat("Avec", n_tests, "tests et α = 0.05:\n")
-cat("Probabilité d'au moins un faux positif:", round(prop_au_moins_un, 3), "\n")
-cat("Valeur théorique: 1 - (1-0.05)^20 =", round(1 - (1-0.05)^n_tests, 3), "\n")
+In this section, we will focus on multiple testing to avoid one aspect of p-hacking. When multiple tests are performed simultaneously, the risk of type I error (false positive) increases, here is an illustrative example.
+
+You are playing Russian roulette with a **Smith & Wesson** revolver, an 8-rounds revolver. Before each game, you spin the chamber and play: 
+
+-   1 time, the probability to die is $1/8$ => **12.5%**
+-   2 times, the probability to die is $1 - (1- 1/8)^2$ => **≈ 23.4%** 
+-   10 times, the probability to die is $1 - (1- 1/8)^{10}$ => **≈ 73.7%** 
+-   30 times, the probability to die is $1 - (1- 1/8)^{30}$ => **≈ 98.2%** 
+
+::: {.column-margin}
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+#| fig-width: 1.5
+#| fig-height: 1.5
+#| fig-cap: "Figure 4: Revolver Smith & Wesson ©Armurerie Lavaux"
+knitr::include_graphics("Images/revolver.jpg")
 ```
+:::
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+#| fig-cap: "Figure 5: Probability to die in Russian roulette (with a Smith & Wesson) relative to the number of attempts"
+# Nombre de parties
+n <- 1:40
+
+# Probabilité cumulée de mourir
+df <- data.frame(
+  parties = n,
+  prob_mort = 1 - (7/8)^n
+)
+
+ggplot(df, aes(x = parties, y = prob_mort)) +
+  geom_line(linewidth = 1.2, colour = "salmon") +
+  geom_hline(yintercept = c(0.25, 0.5, 0.75), linetype = "dashed") +
+  scale_y_continuous(
+    limits = c(0, 1),
+    labels = scales::percent_format(accuracy = 1)
+  ) +
+  labs(
+    title = "Russian roulette (revolver 8 rounds)",
+    subtitle = "Probability to die vs number of tries",
+    x = "Number of tries",
+    y = "Probability of death"
+  ) +
+  theme_minimal()
+
+```
+
+Table: Table 2: Multiple testing, types of errors.
+
+ | Your decision/Reality | **$H_0$ is true** | **$H_0$ is false**| **Total**|
+ |-----------------------|-------------------|-------------------|-------------------|
+ | **Do not reject $H_0$** (test non-significant) | $U$ | $T$ | $m -R$ |
+ | **Reject $H_0$**  (test significant)           | $V$ | $S$ | $R$ |
+ | **Total** | $m_0$ | $m - m_0$ | $m$ |
+
+**$m$** total number of tests ; **$m_0$** number of true $H_0$ ; **$m - m_0$** number of false $H_0$ ; **$V$** number of false positives (type-I error) ; **$T$** number of false negative (type-II error) ; **$S$** number of true positive ; **$U$** number of true negative ; **$R$** number of rejections
 
 ## Family-Wise Error Rate (FWER)
 
-Probabilité de faire au moins une erreur de type I parmi tous les tests.
+Probability to get **at least** one false positive,
+knowing the true null hypotheses
 
-**FWER = P(au moins un faux positif)**
+**FWER = P(at least one false positive)** ou **$P(V>0 | m_0)$**
+
+We want to stricly control number the number of false positives.
+Apply we **$m$** is pretty small.
+
+### Bonferroni method
+
+Stricly control FWER. How it works ? Divide **$\alpha$** by number of test **$m$**.
+
+**reject hypothesis if *p-value* $< \alpha / m$**
+
+```{r bonferroni, echo=FALSE, warning=FALSE, message=FALSE}
+#| fig-cap: "Figure 6: FWER versus number of tests."
+# Nombre de test
+n <- 1:100
+alpha <- 0.05
+# Probabilité cumulée de mourir
+df <- data.frame(
+  test = n,
+  Unadjusted = 1 - (1 - alpha)^n,
+  Bonferroni = 1 - (1 - alpha/n)^n
+) %>% pivot_longer(cols = c(Unadjusted, Bonferroni), names_to = "Adjustement")
+
+ggplot(df, aes(x = test, y = value, colour = Adjustement)) +
+  geom_line(linewidth = 1.2) +
+  geom_hline(yintercept = c(0, 0.05), linetype = "dashed") +
+  scale_y_continuous(
+    limits = c(0, 1),
+    labels = scales::percent_format(accuracy = 1)
+  ) +
+  labs(
+    title = "FWER vs number of tests",
+    subtitle = expression(alpha == 0.05),
+    x = "Number of tests",
+    y = "Probability of at least one false positive"
+  ) +
+  theme_minimal()
+
+```
+
+---
+
+**Exercise** : Reproduce figure 6, $m = 100$, $\alpha = 0.05$.
+
+### Holm method
+
+Method less conservative than Bonferonni, the main idea is make the significance threshold less strict as the p-values get larger
+
+adjusted p-values : $q_{(i)} = \min(1, \max_{j \le i}[(m + 1 - j) * p_{(j)} ])$
+
+Procedure: 
+
+1. Sort the p-values in ascending order
+2. Compare the smallest p-value to $\alpha / m$
+  1. If the associated $H_0$ is not rejected **stop**, otherwise **continue**
+3. Compare the second smallest p-value to $\alpha / m-1$
+  1. If the associated $H_0$ is not rejected **stop**, otherwise **continue**
+4. Keep going till compare the largent p-value to $\alpha$
 
 ## False Discovery Rate (FDR)
 
-Proportion attendue de faux positifs parmi les découvertes significatives.
+FDR is the expected number of significant results which are false positive on average.
 
-**FDR = E(V/R)** où V = nombre de faux positifs, R = nombre de rejets
+**$FDR = E(V/R)$** with **$V$** number of false positives (type-I error) ; **$R$** number of rejections
+**$V/R$** is called false discovery proportion (FDP)
 
-## Corrections pour tests multiples
+We use the FDR when **$m$** is very large and the FWER is too conservative in this case.
 
-```{r corrections-setup}
-# Générer des p-values de test
-set.seed(123)
-n_tests <- 100
-# 90 vrais H₀ (non significatifs) et 10 vrais H₁ (significatifs)
-p_vals <- c(
-  runif(90, 0.05, 1),  # vrais négatifs
-  runif(10, 0, 0.01)   # vrais positifs
-)
-p_vals <- sample(p_vals)  # mélanger
+We also need to control the FDR because the FDP increase if there is **a lot of true negatives** in comparison to **true positives**
+
+Example with a test with **$\alpha = 0.05$** and **$\beta$ = 1**:
+I test 25 variables, 5 of which are true positives
+So we have 5 true positives and $20*0.05$ **(1)** false positive
+$FDP = 1/(5+1)$ **$= 16.67\%$**
+
+Same test but with **505 variables** and still 5 true positives
+So we have 5 true positives and $500*0.05$ **(25**) false positives
+$FDP = 25/(5+25)$ **$= 83.33\%$**
+
+### Benjamini-Hochberg method (B-H)
+
+This method control the FDR and the main idea is similar to Holm's correction
+Note that B-H **requires independent assumptions or at least positively correlated** between tests to garantee FDR control
+
+adjusted p-values : $q_{(i)} = \min(1, \min_{j \ge i}[(m / j) * p_{(j)} ])$
+
+Procedure with $\alpha$ the desired FDR level: 
+
+1. Sort the p-values in ascending order
+2. Compare the smallest p-value to $\alpha / m$
+  1. If the associated $H_0$ is not rejected **stop**, otherwise **continue**
+3. Compare the second smallest p-value to $2\alpha / m$
+  1. If the associated $H_0$ is not rejected **stop**, otherwise **continue**
+4. ...
+5. Keep rejecting $H_0$ until the first $p_{(i)} \ge \frac{i*\alpha}{m}$
+6. Do not reject the remaining hypotheses
+
+### Benjamini-Yekutieli method (B-Y)
+
+B-Y is more **conservative** than B-H requires **no assumptions** on the test dependence structure.
+
+adjusted p-values : $q_{(i)} = \min(1, \min_{j \ge i}[\frac{m*\sum_{k=1}^{m} \frac{1}{k}}{j} * p_{(j)} ])$
+
+Similar procedure as B-H method except that the number of tests is inflated to account for possible dependencies
+
+1. Sort the p-values in ascending order
+2. Compare the smallest p-value to $\alpha / (m * \sum_{k=1}^{m} \frac{1}{k})$
+3. Compare the second smallest p-value to $2\alpha / (m * \sum_{k=1}^{m} \frac{1}{k})$
+4. ...
+5. Keep rejecting $H_0$ until the first $p_{(i)} \ge \frac{i*\alpha}{(m * \sum_{k=1}^{m} \frac{1}{k})}$
+6. Do not reject the remaining hypotheses
+
+### Methods comparison
+
+```{r comparison-methods, message=FALSE}
+#library("DESeq2")
+#library("airway")
+data("airway")
+aw   = DESeqDataSet(se = airway, design = ~ cell + dex)
+aw   = DESeq(aw)
+awde = as.data.frame(results(aw)) |> dplyr::filter(!is.na(pvalue))
+
+# Because lot of genes select a subset of p-values
+# And to facilitate visualization, remove too small p-values e.g 1e-15
+set.seed(8765)
+awde <- awde[sample(dim(awde)[1], size = 13000),]
+awde <- awde[-which(awde$pvalue < 1e-15),]
 ```
 
-### Correction de Bonferroni
+::: {.column-margin}
+```{r comparison-method-raw-histo, echo=FALSE, warning=FALSE, message=FALSE}
+#| fig-width: 3
+#| fig-height: 3
+#| fig-cap: "Figure 7 : Histogramm of the raw p-values of airway's subset data"
 
-Contrôle strictement le FWER en divisant α par le nombre de tests.
+ggplot(awde,
+  aes(x = pvalue)) +
+  geom_histogram(binwidth = 0.025, boundary = 0, fill = "steelblue3", color = "black") +
+  geom_vline(xintercept = 0.05, col = "red")
 
-**α_corrigé = α / m** où m = nombre de tests
 
-```{r bonferroni}
-alpha <- 0.05
-bonf_threshold <- alpha / n_tests
+```
+:::
 
-cat("Seuil de Bonferroni:", bonf_threshold, "\n")
-cat("Tests significatifs (non corrigé):", sum(p_vals < alpha), "\n")
-cat("Tests significatifs (Bonferroni):", sum(p_vals < bonf_threshold), "\n")
+```{r, echo=FALSE}
 
-# Avec p.adjust
-p_bonf <- p.adjust(p_vals, method = "bonferroni")
-cat("Tests significatifs (p.adjust):", sum(p_bonf < alpha), "\n")
+p_val_df <- awde %>%
+  select(pvalue) %>%
+  arrange(pvalue) %>%
+  mutate(p_value_rank = rank(pvalue)) %>%
+  mutate(p_value_holm = p.adjust(pvalue, method = "holm"),
+                               p_value_bonferroni = p.adjust(pvalue, method = "bonferroni"),
+                               p_value_BH = p.adjust(pvalue, method = "BH"),
+                               p_value_BY = p.adjust(pvalue, method = "BY")) %>% 
+  relocate(p_value_rank, .before = pvalue) %>%
+  dplyr::rename(p_value_unadjusted = pvalue)
+
+
+rm(awde, airway, aw)
 ```
 
-### Correction de Holm (Bonferroni séquentielle)
-
-Version moins conservative de Bonferroni.
-
-```{r holm}
-p_holm <- p.adjust(p_vals, method = "holm")
-
-cat("Tests significatifs (Holm):", sum(p_holm < alpha), "\n")
-```
-
-### False Discovery Rate (Benjamini-Hochberg)
-
-Contrôle le FDR au lieu du FWER, plus puissant pour les tests multiples.
-
-```{r fdr}
-p_fdr <- p.adjust(p_vals, method = "BH")
-
-cat("Tests significatifs (FDR/BH):", sum(p_fdr < alpha), "\n")
-```
-
-### Comparaison des méthodes
-
-```{r comparison-methods}
-# Créer un tableau comparatif
-comparaison <- data.frame(
-  p_value = p_vals,
-  rang = rank(p_vals),
-  non_corrige = p_vals < alpha,
-  bonferroni = p_bonf < alpha,
-  holm = p_holm < alpha,
-  BH_FDR = p_fdr < alpha
-)
-
-# Résumé
-resume <- data.frame(
-  Methode = c("Non corrigé", "Bonferroni", "Holm", "BH (FDR)"),
-  Significatifs = c(
-    sum(comparaison$non_corrige),
-    sum(comparaison$bonferroni),
-    sum(comparaison$holm),
-    sum(comparaison$BH_FDR)
+```{r adj-pval-plot, echo=FALSE, message=FALSE, warning=FALSE}
+#| fig-cap: "Figure 8: Plot to visualize p-values against rank, colored by methods"
+df_adjusted <- p_val_df %>%
+  pivot_longer(
+    cols = c(
+      p_value_unadjusted,
+      p_value_bonferroni,
+      p_value_holm,
+      p_value_BH,
+      p_value_BY
+    ),
+    names_to = "Correction_Method",
+    values_to = "Adjusted_P_Value"
   )
-)
 
-print(resume)
+df_adjusted %>%  ggplot(aes(
+  x = p_value_rank,
+  y = log10(Adjusted_P_Value),
+  color = as.factor(Correction_Method)
+)) +
+  geom_point(alpha = 0.6, size = 0.8) +  # Scatter plot of ranks vs. log10(adjusted p-values)
+  geom_hline(
+    yintercept = log10(0.05),
+    color = "red",
+    linetype = "dotdash",
+    size = 1
+  ) +  # No correction threshold
+  scale_color_manual(
+    values = c(
+      "p_value_bonferroni" = "purple",
+      "p_value_holm" = "green",
+      "p_value_BH" = "blue",
+      "p_value_BY" = "orange",
+      "p_value_unadjusted" = "red"
+    ),
+    name = "Correction Method"
+  ) +
+  labs(title = "Adjusted P-values by Correction Method",
+       x = "Rank (smallest to largest)",
+       y = "log10(Adjusted P-value)") +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    plot.background = element_rect(fill = 'white', color = 'white')
+  )
 
-# Visualisation
-comparaison_long <- comparaison %>%
-  select(rang, non_corrige, bonferroni, holm, BH_FDR) %>%
-  pivot_longer(-rang, names_to = "methode", values_to = "significatif") %>%
-  mutate(methode = factor(methode, 
-                          levels = c("non_corrige", "bonferroni", "holm", "BH_FDR"),
-                          labels = c("Non corrigé", "Bonferroni", "Holm", "BH (FDR)")))
-
-ggplot(comparaison_long, aes(x = rang, y = methode, fill = significatif)) +
-  geom_tile() +
-  scale_fill_manual(values = c("white", "darkgreen"), 
-                    labels = c("Non significatif", "Significatif")) +
-  labs(title = "Comparaison des méthodes de correction",
-       x = "Rang de la p-value (1 = plus petite)",
-       y = "Méthode",
-       fill = "") +
-  theme_minimal() +
-  theme(legend.position = "bottom")
 ```
 
-### Visualisation des seuils de décision
-
-```{r visualization-thresholds}
-# Créer un dataframe pour la visualisation
-df_viz <- data.frame(
-  rang = 1:n_tests,
-  p_value = sort(p_vals)
-) %>%
+```{r unadjusted-pval-vs-thresholds, echo=FALSE, message=FALSE, warning=FALSE}
+#| fig-cap: "Figure 9: Plot to visualize p-values against rank, colored by method's decision"
+df_plot <- p_val_df %>%
   mutate(
-    seuil_standard = alpha,
-    seuil_bonferroni = alpha / n_tests,
-    seuil_BH = (rang / n_tests) * alpha
-  )
-
-ggplot(df_viz, aes(x = rang)) +
-  geom_point(aes(y = p_value), alpha = 0.6) +
-  geom_line(aes(y = seuil_standard, color = "Standard (α = 0.05)"), 
-            size = 1, linetype = "dashed") +
-  geom_line(aes(y = seuil_bonferroni, color = "Bonferroni"), 
-            size = 1) +
-  geom_line(aes(y = seuil_BH, color = "Benjamini-Hochberg"), 
-            size = 1) +
-  scale_color_manual(values = c("red", "blue", "green")) +
-  labs(title = "Seuils de décision selon les méthodes",
-       x = "Rang de la p-value",
-       y = "P-value",
-       color = "Méthode") +
-  theme_minimal() +
-  theme(legend.position = "bottom")
-```
-
-## Recommandations pratiques
-
-### Choix de la méthode
-
-| Situation                         | Méthode recommandée      |
-|-----------------------------------|--------------------------|
-| Nombre limité de tests (\< 10)    | Bonferroni               |
-| Besoin de contrôle strict du FWER | Bonferroni ou Holm       |
-| Grand nombre de tests             | FDR (Benjamini-Hochberg) |
-| Exploration de données            | FDR (Benjamini-Hochberg) |
-| Confirmation d'hypothèses         | Bonferroni               |
-
-### Code récapitulatif
-
-```{r recap-code}
-# Fonction pour comparer toutes les méthodes
-comparer_corrections <- function(p_values, alpha = 0.05) {
-  data.frame(
-    Methode = c("Non corrigé", "Bonferroni", "Holm", "Hochberg", 
-                "Hommel", "BH (FDR)", "BY (FDR)"),
-    Significatifs = c(
-      sum(p_values < alpha),
-      sum(p.adjust(p_values, "bonferroni") < alpha),
-      sum(p.adjust(p_values, "holm") < alpha),
-      sum(p.adjust(p_values, "hochberg") < alpha),
-      sum(p.adjust(p_values, "hommel") < alpha),
-      sum(p.adjust(p_values, "BH") < alpha),
-      sum(p.adjust(p_values, "BY") < alpha)
+    N = n(),
+    # total tests
+    alpha = 0.05,
+    # thresholds for each position i = p_value_rank
+    bonferroni_th = alpha / N,
+    holm_th      = alpha / (N - p_value_rank + 1),
+    bh_th        = (p_value_rank / N) * alpha,
+    cN           = sum(1 / (1:N)),
+    by_th        = bh_th / cN
+  ) %>%
+  # assign category by checking strictest threshold first
+  mutate(
+    decision = case_when(
+      p_value_unadjusted < bonferroni_th ~ "Reject (Bonferroni)",
+      p_value_unadjusted < holm_th      ~ "Reject (Holm)",
+      p_value_unadjusted < by_th        ~ "Reject (BY)",
+      p_value_unadjusted < bh_th        ~ "Reject (BH)",
+      p_value_unadjusted < alpha        ~ "Reject (Nominal)",
+      TRUE                               ~ "Never reject"
     )
-  )
-}
+  ) %>%
+  # keep only what we need for plotting
+  select(p_value_rank,
+         p_value_unadjusted,
+         decision,
+         bonferroni_th,
+         holm_th,
+         bh_th,
+         by_th,
+         alpha)
 
-# Exemple d'utilisation
-comparer_corrections(p_vals)
+# Small safety: convert decision to factor with stable ordering (for legend)
+df_plot$decision <- factor(
+  df_plot$decision,
+  levels = c(
+    "Reject (Bonferroni)",
+    "Reject (Holm)",
+    "Reject (BY)",
+    "Reject (BH)",
+    "Reject (Nominal)",
+    "Never reject"
+  )
+)
+
+# Data frame for lines (one row per p_value_rank)
+df_lines <- df_plot %>%
+  select(p_value_rank, bonferroni_th, holm_th, bh_th, by_th, alpha) %>%
+  distinct()
+
+# Plot: log10 p-values vs p_value_rank, lines hidden from legend, legend shows only point colours
+p_val_threshold_plot <- ggplot() +
+  # points colored by most-strict threshold they pass
+  geom_point(data = df_plot,
+             aes(
+               x = p_value_rank,
+               y = log10(p_value_unadjusted),
+               color = decision
+             ),
+             size = 1.8) +
+  # threshold lines (hidden from legend)
+  geom_line(
+    data = df_lines,
+    aes(x = p_value_rank, y = log10(bonferroni_th)),
+    linetype = "dashed",
+    color = "red",
+    size = 1,
+    show.legend = FALSE
+  ) +
+  geom_line(
+    data = df_lines,
+    aes(x = p_value_rank, y = log10(holm_th)),
+    linetype = "dashed",
+    color = "orange",
+    size = 1,
+    show.legend = FALSE
+  ) +
+  geom_line(
+    data = df_lines,
+    aes(x = p_value_rank, y = log10(by_th)),
+    linetype = "dashed",
+    color = "hotpink",
+    size = 1,
+    show.legend = FALSE
+  ) +
+  geom_line(
+    data = df_lines,
+    aes(x = p_value_rank, y = log10(bh_th)),
+    linetype = "dashed",
+    color = "purple",
+    size = 1,
+    show.legend = FALSE
+  ) +
+  geom_hline(
+    yintercept = log10(df_plot$alpha[1]),
+    linetype = "dashed",
+    color = "black",
+    size = 0.8,
+    show.legend = FALSE
+  ) +
+  # color mapping for points only
+  scale_color_manual(
+    values = c(
+      "Reject (Bonferroni)" = "red",
+      "Reject (Holm)"        = "orange",
+      "Reject (BY)"          = "hotpink",
+      "Reject (BH)"          = "purple",
+      "Reject (Nominal)"     = "blue",
+      "Never reject"         = "grey50"
+    ),
+    labels = c(
+      "Bonferroni",
+      "Holm",
+      "B-Y",
+      "B-H",
+      "No correction",
+      "Never"
+    )
+  ) +
+  labs(
+    title = "log10(raw p-values) vs rank with multiplicity thresholds",
+    x = "Rank of p-value",
+    y = "log10(p-value)",
+    color = "Significant"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(plot.title = element_text(hjust = 0,
+                                  size = 16))
+
+p_val_threshold_plot
 ```
+
+---
+
+**Exercise**: Using the code at the beginning of the section, try to reproduce figure 8.
 
 # Relation entre puissance, taille d'échantillon, taille d'effet et alpha
 
